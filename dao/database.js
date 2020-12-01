@@ -1,6 +1,6 @@
 const { Client } = require('pg')
 
-module.exports = class AccessDB {
+module.exports = class Database {
   /**
  * Pass a SQL query to execute on the database
  * @function example executeSQLStatement('SELECT $1::text as name', ['brianc'])
@@ -37,6 +37,6 @@ module.exports = class AccessDB {
 }
 
 // Example
-// AccessDB.executeSQLStatement('select * from test').then((result) => {
+// Database.executeSQLStatement('select * from test').then((result) => {
 //   console.log(result)
 // })

@@ -1,4 +1,4 @@
-const AccessDB = require('./accessDB')
+const Database = require('./database')
 const QuestionList = require('../models/questionList')
 const Answer = require('../models/answer')
 const Question = require('../models/question')
@@ -12,7 +12,7 @@ module.exports = class AnswerListDAO {
    * @returns {QuestionList[]} - Filledin questionists by user.
    */
   static async getAnswerFinishedListByUserId (userId) {
-    const result = await AccessDB.executeSQLStatement(
+    const result = await Database.executeSQLStatement(
       `
       SELECT ql.*
       FROM answerlist
@@ -48,7 +48,7 @@ module.exports = class AnswerListDAO {
    * @returns {boolean} - returns if it was saved or  not.
    */
   static async getAnswerFilledinAswerlist (user, questionlistId) {
-    const result = await AccessDB.executeSQLStatement(
+    const result = await Database.executeSQLStatement(
       `
       SELECT answerlist.*
       FROM answerlist
@@ -63,7 +63,7 @@ module.exports = class AnswerListDAO {
     // TODO set madeby correctly
     if (result.rowCount > 0) {
       const row = result.rows[0]
-      const answersDb = await AccessDB.executeSQLStatement(
+      const answersDb = await Database.executeSQLStatement(
         `
         SELECT answer.*, q.*
         FROM answer
@@ -104,7 +104,7 @@ module.exports = class AnswerListDAO {
     let isUnfinished = null
 
     if (answerList.getId) {
-      const unfinishedAnswerlist = await AccessDB.executeSQLStatement(
+      const unfinishedAnswerlist = await Database.executeSQLStatement(
         `
         SELECT *
         FROM answerlist
@@ -153,7 +153,7 @@ module.exports = class AnswerListDAO {
     let result = null
     switch (setting) {
       case 'finalUpdate':
-        result = await AccessDB.executeSQLStatement(
+        result = await Database.executeSQLStatement(
           `
           UPDATE answerlist
           SET finishedon = current_timestamp
@@ -163,14 +163,14 @@ module.exports = class AnswerListDAO {
         )
         return result
       case 'finalInsert':
-        result = await AccessDB.executeSQLStatement(
+        result = await Database.executeSQLStatement(
           'INSERT INTO answerlist(filledbyuser, finishedon) ' +
           'VALUES($1,current_timestamp) RETURNING answerlistid',
           answerList.getFilledByUser.getId
         )
         return result
       case 'insert':
-        result = await AccessDB.executeSQLStatement(
+        result = await Database.executeSQLStatement(
           'INSERT INTO answerlist(filledbyuser) ' +
           'VALUES($1) RETURNING answerlistid',
           answerList.getFilledByUser.getId
@@ -183,7 +183,7 @@ module.exports = class AnswerListDAO {
     switch (setting) {
       case 'finalUpdate':
         for (const answer of answerList.getAnswers) {
-          await AccessDB.executeSQLStatement(
+          await Database.executeSQLStatement(
             `
             UPDATE answer
             SET answer = $1
@@ -195,7 +195,7 @@ module.exports = class AnswerListDAO {
         break
       case 'finalInsert':
         for (const answer of answerList.getAnswers) {
-          await AccessDB.executeSQLStatement(
+          await Database.executeSQLStatement(
             'INSERT INTO answer(questionid, answerlistid, answer) VALUES($1,$2,$3)',
             answer.getQuestion.getId, answerList.getId, answer.getTextAnswer
           )
@@ -203,7 +203,7 @@ module.exports = class AnswerListDAO {
         break
       case 'insert':
         for (const answer of answerList.getAnswers) {
-          await AccessDB.executeSQLStatement(
+          await Database.executeSQLStatement(
             'INSERT INTO answer(questionid, answerlistid, answer) VALUES($1,$2,$3)',
             answer.getQuestion.getId, answerList.getId, answer.getTextAnswer
           )

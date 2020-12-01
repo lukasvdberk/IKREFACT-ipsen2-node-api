@@ -1,4 +1,4 @@
-const AccessDB = require('./accessDB')
+const Database = require('./database')
 const User = require('../models/user')
 
 module.exports = class UserDAO {
@@ -10,7 +10,7 @@ module.exports = class UserDAO {
   * @returns {boolean} - if succes or not
   */
   static async saveUser (user, hashedPassword) {
-    const result = await AccessDB.executeSQLStatement(
+    const result = await Database.executeSQLStatement(
       'INSERT INTO "User"(username, password) VALUES($1,$2)',
       user.getUsername, hashedPassword
     )
@@ -29,7 +29,7 @@ module.exports = class UserDAO {
   * @returns {User} - If found returns user object or else undefined
   */
   static async getUserByUsername (username) {
-    const result = await AccessDB.executeSQLStatement(
+    const result = await Database.executeSQLStatement(
       'SELECT * FROM "User" WHERE username=$1', username
     )
 
@@ -50,7 +50,7 @@ module.exports = class UserDAO {
   * @param {string} userId - Id of the user you want to make admin
   */
   static async makeUserAdmin (userId) {
-    const result = await AccessDB.executeSQLStatement(
+    const result = await Database.executeSQLStatement(
       'INSERT INTO "adminuser"(userid) VALUES($1)', userId
     )
 
@@ -63,7 +63,7 @@ module.exports = class UserDAO {
   * @param {string} userId - Id of the user you want to make admin
   */
   static async makeAdminUser (userId) {
-    const result = await AccessDB.executeSQLStatement(
+    const result = await Database.executeSQLStatement(
       'Delete FROM adminuser WHERE adminuser.userid = $1', userId
     )
 
@@ -77,7 +77,7 @@ module.exports = class UserDAO {
   * @returns {boolean} - if succes or not
   */
   static async isUserAdmin (user) {
-    const result = await AccessDB.executeSQLStatement(
+    const result = await Database.executeSQLStatement(
       'SELECT * FROM adminuser WHERE userid=$1', user.getId
     )
 
@@ -89,7 +89,7 @@ module.exports = class UserDAO {
    * @returns {Promise<User[]>}
    */
   static async getUsers () {
-    const result = await AccessDB.executeSQLStatement('SELECT "User".username,"User".userid, adminuserid FROM "User" LEFT JOIN adminuser ON "User".userid = adminuser.userid')
+    const result = await Database.executeSQLStatement('SELECT "User".username,"User".userid, adminuserid FROM "User" LEFT JOIN adminuser ON "User".userid = adminuser.userid')
     return result.rows.map(user => new User(user.adminuserid, user.username)
     )
   }

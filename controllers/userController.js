@@ -7,7 +7,7 @@ module.exports = class UserController {
    * @function
    * @returns {json} - response
    */
-  static allUsers(req, res, next) {
+  static allUsers (req, res, next) {
     UserDAO.getUsers().then(users => {
       return ApiResponse.successResponse(users, res)
     }).catch(e => {
@@ -20,7 +20,7 @@ module.exports = class UserController {
    * @function
    * @returns {json} - Returns a response in json format.
    */
-  static changeUserToAdmin(req, res, next) {
+  static changeUserToAdmin (req, res, next) {
     const username = req.body.username
     if (!username) {
       return ApiResponse.errorResponse(400, 'You did not supply a username', res)
@@ -43,7 +43,7 @@ module.exports = class UserController {
    * @function
    * @returns {json} - Returns a response in json format.
    */
-  static changeAdminToUser(req, res, next) {
+  static changeAdminToUser (req, res, next) {
     const username = req.body.username
     UserDAO.getUserByUsername(username).then((user) => {
       if (user === undefined) {

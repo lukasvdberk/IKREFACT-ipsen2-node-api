@@ -1,7 +1,7 @@
 const QuestionList = require('../models/questionList')
 const Admin = require('../models/admin')
 const Question = require('../models/question')
-const AccessDB = require('./accessDB')
+const Database = require('./database')
 
 module.exports = class QuestionListDAO {
   /**
@@ -12,7 +12,7 @@ module.exports = class QuestionListDAO {
    * @returns {QuestionList[]} - Array of QuestionLists without quesions
    */
   static async getAllQuestionLists () {
-    const result = await AccessDB.executeSQLStatement(
+    const result = await Database.executeSQLStatement(
       'SELECT * FROM questionlist WHERE isactive = true'
     )
 
@@ -39,7 +39,7 @@ module.exports = class QuestionListDAO {
    * @returns {QuestionList[]} - Array of QuestionLists without quesions
    */
   static async getAllQuestionListsWithQuestions () {
-    const result = await AccessDB.executeSQLStatement(
+    const result = await Database.executeSQLStatement(
       'SELECT * FROM questionlist WHERE isactive = true'
     )
 
@@ -48,7 +48,7 @@ module.exports = class QuestionListDAO {
     for (let i = 0; i < result.rows.length; i++) {
       // adds questions to the questionlist
       const row = result.rows[i]
-      const questionsDb = await AccessDB.executeSQLStatement(
+      const questionsDb = await Database.executeSQLStatement(
         'SELECT * FROM question WHERE questionidlistid=$1::integer',
         row.questionlistid
       )
@@ -79,7 +79,7 @@ module.exports = class QuestionListDAO {
    * @returns {QuestionList} - Returns the requested question list model.
    */
   static async getQuestionListById (questionListId) {
-    const result = await AccessDB.executeSQLStatement(
+    const result = await Database.executeSQLStatement(
       'SELECT * FROM questionlist WHERE questionlistid=$1::integer', questionListId
     )
 
@@ -88,7 +88,7 @@ module.exports = class QuestionListDAO {
 
       const questions = []
 
-      const adminUserDb = await AccessDB.executeSQLStatement(
+      const adminUserDb = await Database.executeSQLStatement(
         'SELECT userid, username FROM "User" WHERE userid = (SELECT userid FROM adminuser WHERE adminuserid=$1::integer LIMIT 1);',
         row.madebyadmin
       )
@@ -100,7 +100,7 @@ module.exports = class QuestionListDAO {
         adminUser = new Admin(adminUser.userid, adminUser.username, true)
       }
 
-      const questionsDb = await AccessDB.executeSQLStatement(
+      const questionsDb = await Database.executeSQLStatement(
         'SELECT * FROM question WHERE questionidlistid=$1::integer',
         questionListId
       )
@@ -130,7 +130,7 @@ module.exports = class QuestionListDAO {
    * @returns {result} - Updated questionlist as a result.
    */
   static async updateQuestionList (existingQuesitonListId, updatedQuestionList) {
-    const result = await AccessDB.executeSQLStatement(
+    const result = await Database.executeSQLStatement(
       'UPDATE questionlist SET isactive=false WHERE questionlistid=$1::integer',
       existingQuesitonListId
     )
@@ -146,7 +146,7 @@ module.exports = class QuestionListDAO {
    * @returns {boolean} - wheather it was saved or not.
    */
   static async saveQuestionList (questionList) {
-    const result = await AccessDB.executeSQLStatement(
+    const result = await Database.executeSQLStatement(
       'INSERT INTO questionlist(title, madebyadmin, isActive, createdon) ' +
       'VALUES($1,(SELECT adminuserid FROM adminuser WHERE userid=$2 LIMIT 1),$3, current_timestamp) RETURNING questionlistid',
       questionList.getTitle, questionList.getMadeBy.getId, questionList.getIsActive
@@ -156,7 +156,7 @@ module.exports = class QuestionListDAO {
       const questionListId = result.rows[0].questionlistid
 
       for (const question of questionList.getQuestions) {
-        await AccessDB.executeSQLStatement(
+        await Database.executeSQLStatement(
           'INSERT INTO question(questionidlistid,question, questiontype) VALUES($1,$2,$3)',
           questionListId, question.getDescription, question.getType
         )
