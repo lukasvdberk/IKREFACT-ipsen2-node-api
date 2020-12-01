@@ -10,12 +10,12 @@ module.exports = class UserDAO {
   * @returns {boolean} - if succes or not
   */
   static async saveUser (user, hashedPassword) {
-    const result = await Database.executeSQLStatement(
+    const queryResult = await Database.executeSQLStatement(
       'INSERT INTO "User"(username, password) VALUES($1,$2)',
       user.getUsername, hashedPassword
     )
 
-    return result.rowCount === 1
+    return queryResult.rowCount === 1
   }
 
   static async updateUser (existingUserId, updatedUser) {
@@ -29,12 +29,12 @@ module.exports = class UserDAO {
   * @returns {User} - If found returns user object or else undefined
   */
   static async getUserByUsername (username) {
-    const result = await Database.executeSQLStatement(
+    const userQueryResult = await Database.executeSQLStatement(
       'SELECT * FROM "User" WHERE username=$1', username
     )
 
-    if (result.rowCount > 0) {
-      const row = result.rows[0]
+    if (userQueryResult.rowCount > 0) {
+      const row = userQueryResult.rows[0]
 
       const user = new User(row.userid, row.username)
       user.hashPassword = row.password
@@ -50,11 +50,11 @@ module.exports = class UserDAO {
   * @param {string} userId - Id of the user you want to make admin
   */
   static async makeUserAdmin (userId) {
-    const result = await Database.executeSQLStatement(
+    const queryResult = await Database.executeSQLStatement(
       'INSERT INTO "adminuser"(userid) VALUES($1)', userId
     )
 
-    return result.rowCount === 1
+    return queryResult.rowCount === 1
   }
 
   /**
@@ -63,11 +63,11 @@ module.exports = class UserDAO {
   * @param {string} userId - Id of the user you want to make admin
   */
   static async makeAdminUser (userId) {
-    const result = await Database.executeSQLStatement(
+    const queryResult = await Database.executeSQLStatement(
       'Delete FROM adminuser WHERE adminuser.userid = $1', userId
     )
 
-    return result.rowCount === 1
+    return queryResult.rowCount === 1
   }
 
   /**
@@ -77,11 +77,11 @@ module.exports = class UserDAO {
   * @returns {boolean} - if succes or not
   */
   static async isUserAdmin (user) {
-    const result = await Database.executeSQLStatement(
+    const queryResult = await Database.executeSQLStatement(
       'SELECT * FROM adminuser WHERE userid=$1', user.getId
     )
 
-    return result.rowCount > 0
+    return queryResult.rowCount > 0
   }
 
   /**
@@ -89,8 +89,12 @@ module.exports = class UserDAO {
    * @returns {Promise<User[]>}
    */
   static async getUsers () {
-    const result = await Database.executeSQLStatement('SELECT "User".username,"User".userid, adminuserid FROM "User" LEFT JOIN adminuser ON "User".userid = adminuser.userid')
-    return result.rows.map(user => new User(user.adminuserid, user.username)
+    const queryResult = await Database.executeSQLStatement(
+      'SELECT "User".username,"User".userid, adminuserid ' +
+      'FROM "User" ' +
+      'LEFT JOIN adminuser ON "User".userid = adminuser.userid'
+    )
+    return queryResult.rows.map(user => new User(user.adminuserid, user.username)
     )
   }
 }

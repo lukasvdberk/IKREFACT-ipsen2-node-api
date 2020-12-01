@@ -12,13 +12,13 @@ module.exports = class QuestionListDAO {
    * @returns {QuestionList[]} - Array of QuestionLists without quesions
    */
   static async getAllQuestionLists () {
-    const result = await Database.executeSQLStatement(
+    const activeQuestionListQueryResult = await Database.executeSQLStatement(
       'SELECT * FROM questionlist WHERE isactive = true'
     )
 
     const questionLists = []
     // TODO set madeby correctly
-    result.rows.forEach((row) => {
+    activeQuestionListQueryResult.rows.forEach((row) => {
       questionLists.push(new QuestionList(
         row.questionlistid,
         row.title,
@@ -39,15 +39,15 @@ module.exports = class QuestionListDAO {
    * @returns {QuestionList[]} - Array of QuestionLists without quesions
    */
   static async getAllQuestionListsWithQuestions () {
-    const result = await Database.executeSQLStatement(
+    const activeQuestionListQueryResult = await Database.executeSQLStatement(
       'SELECT * FROM questionlist WHERE isactive = true'
     )
 
     const questionLists = []
     // TODO set madeby correctly
-    for (let i = 0; i < result.rows.length; i++) {
+    for (let i = 0; i < activeQuestionListQueryResult.rows.length; i++) {
       // adds questions to the questionlist
-      const row = result.rows[i]
+      const row = activeQuestionListQueryResult.rows[i]
       const questionsDb = await Database.executeSQLStatement(
         'SELECT * FROM question WHERE questionidlistid=$1::integer',
         row.questionlistid
@@ -79,12 +79,12 @@ module.exports = class QuestionListDAO {
    * @returns {QuestionList} - Returns the requested question list model.
    */
   static async getQuestionListById (questionListId) {
-    const result = await Database.executeSQLStatement(
+    const questionListQueryResult = await Database.executeSQLStatement(
       'SELECT * FROM questionlist WHERE questionlistid=$1::integer', questionListId
     )
 
-    if (result.rowCount > 0) {
-      const row = result.rows[0]
+    if (questionListQueryResult.rowCount > 0) {
+      const row = questionListQueryResult.rows[0]
 
       const questions = []
 
@@ -100,16 +100,16 @@ module.exports = class QuestionListDAO {
         adminUser = new Admin(adminUser.userid, adminUser.username, true)
       }
 
-      const questionsDb = await Database.executeSQLStatement(
+      const questionsQueryResult = await Database.executeSQLStatement(
         'SELECT * FROM question WHERE questionidlistid=$1::integer',
         questionListId
       )
 
-      questionsDb.rows.forEach((questionRow) => {
+      questionsQueryResult.rows.forEach((questionRow) => {
         questions.push(new Question(questionRow.questionid, questionRow.question, questionRow.questiontype))
       })
 
-      const questionList = new QuestionList(
+      return new QuestionList(
         row.questionlistid,
         row.title,
         adminUser,
@@ -117,8 +117,6 @@ module.exports = class QuestionListDAO {
         questions,
         row.isactive
       )
-
-      return questionList
     }
     return undefined
   }
@@ -127,16 +125,16 @@ module.exports = class QuestionListDAO {
    * Update a existing question list with edits made by admin
    * @param {Number} existingQuesitonListId - Id from the not updated questionlist.
    * @param {QuestionList} updatedQuestionList - Questionlist that is updated.
-   * @returns {result} - Updated questionlist as a result.
+   * @returns {queryResult} - Updated questionlist as a queryResult.
    */
   static async updateQuestionList (existingQuesitonListId, updatedQuestionList) {
-    const result = await Database.executeSQLStatement(
+    const updateQueryResult = await Database.executeSQLStatement(
       'UPDATE questionlist SET isactive=false WHERE questionlistid=$1::integer',
       existingQuesitonListId
     )
-    const newInsertResult = await this.saveQuestionList(updatedQuestionList)
+    const newInsertQueryResult = await this.saveQuestionList(updatedQuestionList)
 
-    return result.rowCount > 0 && newInsertResult
+    return updateQueryResult.rowCount > 0 && newInsertQueryResult
   }
 
   /**
@@ -146,14 +144,14 @@ module.exports = class QuestionListDAO {
    * @returns {boolean} - wheather it was saved or not.
    */
   static async saveQuestionList (questionList) {
-    const result = await Database.executeSQLStatement(
+    const saveQueryResult = await Database.executeSQLStatement(
       'INSERT INTO questionlist(title, madebyadmin, isActive, createdon) ' +
       'VALUES($1,(SELECT adminuserid FROM adminuser WHERE userid=$2 LIMIT 1),$3, current_timestamp) RETURNING questionlistid',
       questionList.getTitle, questionList.getMadeBy.getId, questionList.getIsActive
     )
 
-    if (result.rowCount > 0) {
-      const questionListId = result.rows[0].questionlistid
+    if (saveQueryResult.rowCount > 0) {
+      const questionListId = saveQueryResult.rows[0].questionlistid
 
       for (const question of questionList.getQuestions) {
         await Database.executeSQLStatement(

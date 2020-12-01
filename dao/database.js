@@ -15,11 +15,11 @@ module.exports = class Database {
 
       await connection.connect()
 
-      const result = await connection.query(sqlStatement, args)
+      const queryResult = await connection.query(sqlStatement, args)
       // TODO add logging
       connection.end()
 
-      return result
+      return queryResult
     } catch (exception) {
       console.log(exception)
     }
@@ -37,6 +37,6 @@ module.exports = class Database {
 }
 
 // Example
-// Database.executeSQLStatement('select * from test').then((result) => {
-//   console.log(result)
+// Database.executeSQLStatement('select * from test').then((queryResult) => {
+//   console.log(queryResult)
 // })

@@ -12,7 +12,7 @@ module.exports = class AnswerListDAO {
    * @returns {QuestionList[]} - Filledin questionists by user.
    */
   static async getAnswerFinishedListByUserId (userId) {
-    const result = await Database.executeSQLStatement(
+    const questionListQueryResult = await Database.executeSQLStatement(
       `
       SELECT ql.*
       FROM answerlist
@@ -27,7 +27,7 @@ module.exports = class AnswerListDAO {
 
     const questionLists = []
     // TODO set madeby correctly
-    result.rows.forEach((row) => {
+    questionListQueryResult.rows.forEach((row) => {
       questionLists.push(new QuestionList(
         row.questionlistid,
         row.title,
@@ -48,7 +48,7 @@ module.exports = class AnswerListDAO {
    * @returns {boolean} - returns if it was saved or  not.
    */
   static async getAnswerFilledinAswerlist (user, questionlistId) {
-    const result = await Database.executeSQLStatement(
+    const filledAnswerListQueryResult = await Database.executeSQLStatement(
       `
       SELECT answerlist.*
       FROM answerlist
@@ -61,9 +61,9 @@ module.exports = class AnswerListDAO {
     )
 
     // TODO set madeby correctly
-    if (result.rowCount > 0) {
-      const row = result.rows[0]
-      const answersDb = await Database.executeSQLStatement(
+    if (filledAnswerListQueryResult.rowCount > 0) {
+      const row = filledAnswerListQueryResult.rows[0]
+      const answersFromAnswerListQueryResult = await Database.executeSQLStatement(
         `
         SELECT answer.*, q.*
         FROM answer
@@ -74,7 +74,7 @@ module.exports = class AnswerListDAO {
       )
 
       const answers = []
-      answersDb.rows.forEach((answerDb) => {
+      answersFromAnswerListQueryResult.rows.forEach((answerDb) => {
         const question = new Question(answerDb.questionid, answerDb.question, answerDb.questiontype)
 
         // TODO add file support
@@ -100,7 +100,7 @@ module.exports = class AnswerListDAO {
    * @returns {boolean} - returns if it was saved or  not.
    */
   static async saveAnswerList (answerList, final) {
-    let result = null
+    let queryResult = null
     let isUnfinished = null
 
     if (answerList.getId) {
@@ -118,19 +118,19 @@ module.exports = class AnswerListDAO {
     if (final === true) {
       if (isUnfinished === 1) {
         // update if isUnfinished exist
-        result = await this.updateAnswerList('finalUpdate', answerList)
+        queryResult = await this.updateAnswerList('finalUpdate', answerList)
       } else {
         // insert if isUnfinished does not exist
-        result = await this.updateAnswerList('finalInsert', answerList)
-        answerList.id = result.rows[0].answerlistid
+        queryResult = await this.updateAnswerList('finalInsert', answerList)
+        answerList.id = queryResult.rows[0].answerlistid
       }
     } else {
-      result = await this.updateAnswerList('insert', answerList)
-      answerList.id = result.rows[0].answerlistid
+      queryResult = await this.updateAnswerList('insert', answerList)
+      answerList.id = queryResult.rows[0].answerlistid
     }
 
-    if (result.rowCount > 0) {
-      // const answerListId = result.rows[0].answerlistid
+    if (queryResult.rowCount > 0) {
+      // const answerListId = queryResult.rows[0].answerlistid
 
       if (final === true) {
         if (isUnfinished === 1) {
@@ -150,10 +150,10 @@ module.exports = class AnswerListDAO {
   }
 
   static async updateAnswerList (setting, answerList) {
-    let result = null
+    let queryResult = null
     switch (setting) {
       case 'finalUpdate':
-        result = await Database.executeSQLStatement(
+        queryResult = await Database.executeSQLStatement(
           `
           UPDATE answerlist
           SET finishedon = current_timestamp
@@ -161,21 +161,21 @@ module.exports = class AnswerListDAO {
           `,
           answerList.getId
         )
-        return result
+        return queryResult
       case 'finalInsert':
-        result = await Database.executeSQLStatement(
+        queryResult = await Database.executeSQLStatement(
           'INSERT INTO answerlist(filledbyuser, finishedon) ' +
           'VALUES($1,current_timestamp) RETURNING answerlistid',
           answerList.getFilledByUser.getId
         )
-        return result
+        return queryResult
       case 'insert':
-        result = await Database.executeSQLStatement(
+        queryResult = await Database.executeSQLStatement(
           'INSERT INTO answerlist(filledbyuser) ' +
           'VALUES($1) RETURNING answerlistid',
           answerList.getFilledByUser.getId
         )
-        return result
+        return queryResult
     }
   }
 
