@@ -1,9 +1,9 @@
-module.exports = class Answer {
+module.exports = class SurveyAnswer {
   /**
-   * Answer constructor for answer model
+   * SurveyAnswer constructor for answer model
    * @constructor
-   * @param {Question} question - The question model which this objects answers
-   * @param {string} textAnswer - Answer to question in text form
+   * @param {SurveyQuestion} question - The question model which this objects answers
+   * @param {string} textAnswer - SurveyAnswer to question in text form
    * @param {File[]} fileArray - Array of files
    */
   constructor (question, textAnswer, fileArray) {

@@ -1,7 +1,7 @@
 const AnswerListDAO = require('../dao/answerListDAO')
 const Answer = require('../models/answer')
 const AnswerList = require('../models/answerList')
-const Question = require('../models/question')
+const SurveyQuestion = require('../models/surveyQuestion')
 const ApiResponse = require('./utils/apiResponse')
 
 module.exports = class AnswerListController {
@@ -14,20 +14,20 @@ module.exports = class AnswerListController {
   static answerLists (req, res, next) {
     // answerslist by user
     const user = req.user
-    AnswerListDAO.getAnswerFinishedListByUserId(user.getId).then((questionlist) => {
-      return ApiResponse.successResponse(questionlist, res)
+    AnswerListDAO.getAnswerFinishedListByUserId(user.getId).then((listOfSurvey) => {
+      return ApiResponse.successResponse(listOfSurvey, res)
     }).catch((ignored) => {
       return ApiResponse.errorResponse(500, 'Failed to retrieve filled in questionlist', res)
     })
   }
 
-  static answerListByIdQuestionListId (req, res, next) {
+  static answerListByIdSurveyId (req, res, next) {
     // fetches answerlist by questionid.
     // TODO haal vragenlijsten op met questionid en ingevulde vragen
-    var questionListId = req.params.questionListId
+    var surveyId = req.params.questionListId
     const user = req.user
 
-    AnswerListDAO.getAnswerFilledinAswerlist(user, questionListId).then((answerlist) => {
+    AnswerListDAO.getAnswerFilledinAswerlist(user, surveyId).then((answerlist) => {
       return ApiResponse.successResponse(answerlist, res)
     }).catch((ignored) => {
       console.log(ignored)
@@ -48,7 +48,7 @@ module.exports = class AnswerListController {
     if (answersReq.length > 0) {
       for (let i = 0; i < answersReq.length; i++) {
         const answer = answersReq[i]
-        const answerModel = new Answer(new Question(answer.question.id, undefined, undefined), answer.textAnswer, undefined)
+        const answerModel = new Answer(SurveyQuestion(answer.question.id, undefined, undefined), answer.textAnswer, undefined)
         answers.push(answerModel)
       }
 
@@ -92,7 +92,7 @@ module.exports = class AnswerListController {
     if (answersReq.length > 0) {
       for (let i = 0; i < answersReq.length; i++) {
         const answer = answersReq[i]
-        const answerModel = new Answer(new Question(answer.question.id, undefined, undefined), answer.textAnswer, undefined)
+        const answerModel = new Answer(SurveyQuestion(answer.question.id, undefined, undefined), answer.textAnswer, undefined)
         answers.push(answerModel)
       }
 

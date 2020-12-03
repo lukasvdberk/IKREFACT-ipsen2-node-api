@@ -1,7 +1,7 @@
 const Database = require('./database')
-const QuestionList = require('../models/questionList')
+const Survey = require('../models/survey')
 const Answer = require('../models/answer')
-const Question = require('../models/question')
+const SurveyQuestion = require('../models/surveyQuestion')
 const AnswerList = require('../models/answerList')
 
 module.exports = class AnswerListDAO {
@@ -9,10 +9,10 @@ module.exports = class AnswerListDAO {
    * Gets the list of quesitonslist already filled by user.
    * @function
    * @param {Number} userId - Should be a user model.
-   * @returns {QuestionList[]} - Filledin questionists by user.
+   * @returns {Survey[]} - Filledin questionists by user.
    */
   static async getAnswerFinishedListByUserId (userId) {
-    const questionListQueryResult = await Database.executeSQLStatement(
+    const surveyListQueryResult = await Database.executeSQLStatement(
       `
       SELECT ql.*
       FROM answerlist
@@ -25,10 +25,10 @@ module.exports = class AnswerListDAO {
       userId
     )
 
-    const questionLists = []
+    const listOfSurveys = []
     // TODO set madeby correctly
-    questionListQueryResult.rows.forEach((row) => {
-      questionLists.push(new QuestionList(
+    surveyListQueryResult.rows.forEach((row) => {
+      listOfSurveys.push(new Survey(
         row.questionlistid,
         row.title,
         undefined,
@@ -38,7 +38,7 @@ module.exports = class AnswerListDAO {
       ))
     })
 
-    return questionLists
+    return listOfSurveys
   }
 
   /**
@@ -47,7 +47,7 @@ module.exports = class AnswerListDAO {
    * @param {User} user - Should be a user model.
    * @returns {boolean} - returns if it was saved or  not.
    */
-  static async getAnswerFilledinAswerlist (user, questionlistId) {
+  static async getAnswerFilledinAswerlist (user, surveyId) {
     const filledAnswerListQueryResult = await Database.executeSQLStatement(
       `
       SELECT answerlist.*
@@ -57,7 +57,7 @@ module.exports = class AnswerListDAO {
       JOIN questionlist ql ON ql.questionlistid = q.questionidlistid
       WHERE answerlist.filledbyuser=$1::integer AND ql.questionlistid=$2::integer   
       `,
-      user.getId, questionlistId
+      user.getId, surveyId
     )
 
     // TODO set madeby correctly
@@ -74,11 +74,11 @@ module.exports = class AnswerListDAO {
       )
 
       const answers = []
-      answersFromAnswerListQueryResult.rows.forEach((answerDb) => {
-        const question = new Question(answerDb.questionid, answerDb.question, answerDb.questiontype)
+      answersFromAnswerListQueryResult.rows.forEach((answer) => {
+        const question = new SurveyQuestion(answer.questionid, answer.question, answer.questiontype)
 
         // TODO add file support
-        answers.push(new Answer(question, answerDb.answer, []))
+        answers.push(new Answer(question, answer.answer, []))
       })
 
       return new AnswerList(

@@ -17,7 +17,7 @@ module.exports = class File {
    * @param content
    * @returns {File}
    */
-  static new (answerId, filename, content) {
+  static saveFileAsAnswer (answerId, filename, content) {
     const savePath = process.env.FILE_SAVE_PATH
     const extension = FileHelper.getExtensionFromFilename(filename)
     const uuid = uuidv4()

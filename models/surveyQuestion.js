@@ -1,6 +1,6 @@
-module.exports = class Question {
+module.exports = class SurveyQuestion {
   /**
-   * Answer constructor for answer model
+   * SurveyQuestion constructor for survey question model
    * @constructor
    * @param {Number} id - Database id
    * @param {string} description - The question in plain text

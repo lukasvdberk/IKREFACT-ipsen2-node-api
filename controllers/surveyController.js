@@ -1,49 +1,49 @@
-const QuestionList = require('../models/questionList')
-const QuestionListDAO = require('../dao/questionListDAO')
+const Survey = require('../models/survey')
+const SurveyDAO = require('../dao/surveyDAO')
 const ApiResponse = require('./utils/apiResponse')
-const QuestionListCheck = require('./checkers/questionListCheck')
-const Question = require('../models/question')
+const SurveyChecker = require('./validators/surveyValidator')
+const SurveyQuestion = require('../models/surveyQuestion')
 
-module.exports = class QuestionListController {
-  static questionList (req, res, next) {
-    QuestionListDAO.getAllQuestionLists().then((questionLists) => {
-      return ApiResponse.successResponse(questionLists, res)
+module.exports = class SurveyController {
+  static getSurveys (req, res, next) {
+    SurveyDAO.getAllSurveys().then((listOfSurveys) => {
+      return ApiResponse.successResponse(listOfSurveys, res)
     }).catch((ignored) => {
       return ApiResponse.errorResponse(500, 'Failed to retrieve questions', res)
     })
   }
 
   /**
-   * Gets question list by id.
+   * Gets survey by id.
    * @function
    * @returns {json} - Returns a response.
    */
-  static questionListById (req, res, next) {
-    var questionListId = req.params.questionListId
-    QuestionListDAO.getQuestionListById(questionListId).then((questionList) => {
-      return ApiResponse.successResponse(questionList, res)
+  static surveyById (req, res, next) {
+    const surveyIdToSearch = req.params.questionListId
+    SurveyDAO.getSurveyById(surveyIdToSearch).then((surveyToReturn) => {
+      return ApiResponse.successResponse(surveyToReturn, res)
     }).catch((ignored) => {
       return ApiResponse.errorResponse(500, 'Failed to retrieve questions', res)
     })
   }
 
-  static saveQuestionList (req, res, next) {
+  static saveSurvey (req, res, next) {
     const admin = req.user
     const title = req.body.title
     const questionsReq = req.body.questions
 
-    const questionsModels = []
+    const questions = []
 
-    const errorMessage = QuestionListCheck.questionListCheck(title, questionsReq)
+    const errorMessage = SurveyChecker.isValidSurvey(title, questionsReq)
 
     if (errorMessage === undefined) {
       for (let i = 0; i < questionsReq.length; i++) {
         const question = questionsReq[i]
-        const questionModel = new Question(undefined, question.description, question.type)
-        questionsModels.push(questionModel)
+        const questionModel = new SurveyQuestion(undefined, question.description, question.type)
+        questions.push(questionModel)
       }
-      const questionList = new QuestionList(undefined, title, admin, undefined, questionsModels, true)
-      QuestionListDAO.saveQuestionList(questionList).then((success) => {
+      const surveyToSave = new Survey(undefined, title, admin, undefined, questions, true)
+      SurveyDAO.saveSurvey(surveyToSave).then((success) => {
         if (success) {
           return ApiResponse.successResponse({ saved: true }, res)
         } else {
@@ -58,7 +58,7 @@ module.exports = class QuestionListController {
     }
   }
 
-  static editQuestionList (req, res, next) {
+  static editSurvey (req, res, next) {
     const id = req.body.id
     const admin = req.user
     const title = req.body.title
@@ -66,19 +66,19 @@ module.exports = class QuestionListController {
 
     const questionsModels = []
 
-    const errorMessage = QuestionListCheck.questionListCheck(title, questionsReq)
-    QuestionListDAO.getQuestionListById(id).then((questionList) => {
-      if (questionList === undefined) {
+    const errorMessage = SurveyChecker.isValidSurvey(title, questionsReq)
+    SurveyDAO.getSurveyById(id).then((foundSurvey) => {
+      if (foundSurvey === undefined) {
         return ApiResponse.errorResponse(404, 'Question list not found', res)
       } else {
         if (errorMessage === undefined) {
           for (let i = 0; i < questionsReq.length; i++) {
             const question = questionsReq[i]
-            const questionModel = new Question(undefined, question.description, question.type)
+            const questionModel = new SurveyQuestion(undefined, question.description, question.type)
             questionsModels.push(questionModel)
           }
-          const questionList = new QuestionList(undefined, title, admin, undefined, questionsModels, true)
-          QuestionListDAO.updateQuestionList(id, questionList).then((success) => {
+          const survey = new SurveyQuestion(undefined, title, admin, undefined, questionsModels, true)
+          SurveyDAO.updateSurvey(id, survey).then((success) => {
             if (success) {
               return ApiResponse.successResponse({ saved: true }, res)
             } else {

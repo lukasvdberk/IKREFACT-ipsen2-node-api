@@ -1,13 +1,13 @@
-module.exports = class QuestionList {
+module.exports = class Survey {
   /**
    * Answer constructor for answer model
    * @constructor
    * @param {Number} id - Database id
-   * @param {string} title - Title of the list of quetions
+   * @param {string} title - Title of the list of question
    * @param {Admin} madeBy - A admin model of who created this
    * @param {createdOn} createdOn
    * @param {Question[]} questions - Array of question models that belong to this question list
-   * @param {boolean} isActive - Wheather the questionlist is still used or not
+   * @param {boolean} isActive - Whether the survey is still used or not
    */
   constructor (id, title, madeBy, createdOn, questions, isActive) {
     this.id = id
