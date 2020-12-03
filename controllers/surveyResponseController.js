@@ -1,34 +1,34 @@
-const AnswerListDAO = require('../dao/answerListDAO')
+const SurveyResponseDAO = require('../dao/surveyResponseDAO')
 const Answer = require('../models/answer')
-const AnswerList = require('../models/answerList')
+const SurveyResponse = require('../models/surveyResponse')
 const SurveyQuestion = require('../models/surveyQuestion')
 const ApiResponse = require('./utils/apiResponse')
 
-module.exports = class AnswerListController {
+module.exports = class SurveyResponseController {
   /**
    * Gets all question lists belonging to the logged in user.
    * @function
    * @returns {json} response
    * @
    */
-  static answerLists (req, res, next) {
-    // answerslist by user
+  static surveyResponsesFromUser (req, res, next) {
+    // survey responses by user
     const user = req.user
-    AnswerListDAO.getAnswerFinishedListByUserId(user.getId).then((listOfSurvey) => {
+    SurveyResponseDAO.getFinishedSurveyResponsesByUserId(user.getId).then((listOfSurvey) => {
       return ApiResponse.successResponse(listOfSurvey, res)
     }).catch((ignored) => {
       return ApiResponse.errorResponse(500, 'Failed to retrieve filled in questionlist', res)
     })
   }
 
-  static answerListByIdSurveyId (req, res, next) {
-    // fetches answerlist by questionid.
+  static getSurveyResponseById (req, res, next) {
+    // fetches surveyresponse by survey id.
     // TODO haal vragenlijsten op met questionid en ingevulde vragen
-    var surveyId = req.params.questionListId
+    const surveyId = req.params.questionListId
     const user = req.user
 
-    AnswerListDAO.getAnswerFilledinAswerlist(user, surveyId).then((answerlist) => {
-      return ApiResponse.successResponse(answerlist, res)
+    SurveyResponseDAO.getExistingSurveyResponseFromUser(user, surveyId).then((surveyBydId) => {
+      return ApiResponse.successResponse(surveyBydId, res)
     }).catch((ignored) => {
       console.log(ignored)
       return ApiResponse.errorResponse(500, 'Failed to retrieve filled in answerlist', res)
@@ -40,7 +40,7 @@ module.exports = class AnswerListController {
    * @function
    * @returns {json} - Returns a response.
    */
-  static saveAnswerList (req, res, next) {
+  static saveSurveyResponse (req, res, next) {
     const user = req.user
     const answersReq = req.body.answers
     const answers = []
@@ -52,12 +52,12 @@ module.exports = class AnswerListController {
         answers.push(answerModel)
       }
 
-      let answerList = null
-      const answerlistId = req.id
+      let surveyResponseToSave = null
+      const existingSurveyId = req.id
 
-      answerList = new AnswerList(answerlistId, user, undefined, answers)
+      surveyResponseToSave = new SurveyResponse(existingSurveyId, user, undefined, answers)
 
-      AnswerListDAO.saveAnswerList(answerList, false).then((success) => {
+      SurveyResponseDAO.saveSurveyResponse(surveyResponseToSave, false).then((success) => {
         if (success) {
           return res.json({
             success: true,
@@ -83,27 +83,27 @@ module.exports = class AnswerListController {
     }
   }
 
-  static finalizeAnswerList (req, res, next) {
+  static finalizeExistingSurveyResponse (req, res, next) {
     const user = req.user
     const answersReq = req.body.answers
     const answers = []
-    const answerlistId = req.body.id
+    const existingSurveyId = req.body.id
 
     if (answersReq.length > 0) {
       for (let i = 0; i < answersReq.length; i++) {
         const answer = answersReq[i]
-        const answerModel = new Answer(SurveyQuestion(answer.question.id, undefined, undefined), answer.textAnswer, undefined)
-        answers.push(answerModel)
+        const surveyAnswer = new Answer(new SurveyQuestion(answer.question.id, undefined, undefined), answer.textAnswer, undefined)
+        answers.push(surveyAnswer)
       }
 
-      let answerList = null
-      if (answerlistId !== 0) {
-        answerList = new AnswerList(answerlistId, user, undefined, answers)
+      let surveyToFinalize = null
+      if (existingSurveyId !== 0) {
+        surveyToFinalize = new SurveyResponse(existingSurveyId, user, undefined, answers)
       } else {
-        answerList = new AnswerList(undefined, user, undefined, answers)
+        surveyToFinalize = new SurveyResponse(undefined, user, undefined, answers)
       }
 
-      AnswerListDAO.saveAnswerList(answerList, true).then((success) => {
+      SurveyResponseDAO.saveSurveyResponse(surveyToFinalize, true).then((success) => {
         if (success) {
           return res.json({
             success: true,

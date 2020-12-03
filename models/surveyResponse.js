@@ -1,6 +1,6 @@
-module.exports = class AnswerList {
+module.exports = class SurveyResponse {
   /**
-   * AnswerList constructor for AnswerList model
+   * SurveyResponse constructor for SurveyResponse model
    * @constructor
    * @param {Number} id - Database id
    * @param {User} filledByUser - User model for which user answered the questions
@@ -15,7 +15,7 @@ module.exports = class AnswerList {
   }
 
   /**
-   * AnswerList constructor for AnswerList model
+   * SurveyResponse constructor for SurveyResponse model
    * @get
    * @returns {Number} id - Database id
    */
@@ -24,7 +24,7 @@ module.exports = class AnswerList {
   }
 
   /**
-   * AnswerList constructor for AnswerList model
+   * SurveyResponse constructor for SurveyResponse model
    * @get
    * @return {User} filledByUser - User model for which user answered the questions
    */
@@ -37,7 +37,7 @@ module.exports = class AnswerList {
   }
 
   /**
-   * AnswerList constructor for AnswerList model
+   * SurveyResponse constructor for SurveyResponse model
    * @get
    * @returns {Answer[]} answers - Array of Answer models
    */
@@ -46,7 +46,7 @@ module.exports = class AnswerList {
   }
 
   /**
-   * AnswerList constructor for AnswerList model
+   * SurveyResponse constructor for SurveyResponse model
    * @get
    * @returns {boolean} wheather it the questionlist was finished or not
    */

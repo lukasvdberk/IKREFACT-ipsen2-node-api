@@ -2,16 +2,16 @@ const Database = require('./database')
 const Survey = require('../models/survey')
 const Answer = require('../models/answer')
 const SurveyQuestion = require('../models/surveyQuestion')
-const AnswerList = require('../models/answerList')
+const SurveyResponse = require('../models/surveyResponse')
 
-module.exports = class AnswerListDAO {
+module.exports = class SurveyResponseDAO {
   /**
-   * Gets the list of quesitonslist already filled by user.
+   * Gets the list of Survey already filled by user.
    * @function
    * @param {Number} userId - Should be a user model.
    * @returns {Survey[]} - Filledin questionists by user.
    */
-  static async getAnswerFinishedListByUserId (userId) {
+  static async getFinishedSurveyResponsesByUserId (userId) {
     const surveyListQueryResult = await Database.executeSQLStatement(
       `
       SELECT ql.*
@@ -42,13 +42,13 @@ module.exports = class AnswerListDAO {
   }
 
   /**
-   * Gets the list of quesitonslist already filled by user.
+   * Gets the list of survey already filled by user.
    * @function
    * @param {User} user - Should be a user model.
    * @returns {boolean} - returns if it was saved or  not.
    */
-  static async getAnswerFilledinAswerlist (user, surveyId) {
-    const filledAnswerListQueryResult = await Database.executeSQLStatement(
+  static async getExistingSurveyResponseFromUser (user, surveyId) {
+    const existingSurveyResponseQueryResult = await Database.executeSQLStatement(
       `
       SELECT answerlist.*
       FROM answerlist
@@ -61,9 +61,9 @@ module.exports = class AnswerListDAO {
     )
 
     // TODO set madeby correctly
-    if (filledAnswerListQueryResult.rowCount > 0) {
-      const row = filledAnswerListQueryResult.rows[0]
-      const answersFromAnswerListQueryResult = await Database.executeSQLStatement(
+    if (existingSurveyResponseQueryResult.rowCount > 0) {
+      const row = existingSurveyResponseQueryResult.rows[0]
+      const answersFromSurveyResponseQueryResult = await Database.executeSQLStatement(
         `
         SELECT answer.*, q.*
         FROM answer
@@ -74,14 +74,14 @@ module.exports = class AnswerListDAO {
       )
 
       const answers = []
-      answersFromAnswerListQueryResult.rows.forEach((answer) => {
+      answersFromSurveyResponseQueryResult.rows.forEach((answer) => {
         const question = new SurveyQuestion(answer.questionid, answer.question, answer.questiontype)
 
         // TODO add file support
         answers.push(new Answer(question, answer.answer, []))
       })
 
-      return new AnswerList(
+      return new SurveyResponse(
         row.answerlistid,
         user,
         row.finishedon,
@@ -95,53 +95,51 @@ module.exports = class AnswerListDAO {
   /**
    * Saves an answer list to the database.
    * @function
-   * @param {AnswerList} answerList - AnswerList to save.
-   * @param {boolean} final - Whether the saved answerlist is the final version or not.
+   * @param {Survey} surveyResponseToSave - SurveyResponse to save.
+   * @param {boolean} final - Whether the saved SurveyResponse is the final version or not.
    * @returns {boolean} - returns if it was saved or  not.
    */
-  static async saveAnswerList (answerList, final) {
+  static async saveSurveyResponse (surveyResponseToSave, final) {
     let queryResult = null
     let isUnfinished = null
 
-    if (answerList.getId) {
-      const unfinishedAnswerlist = await Database.executeSQLStatement(
+    if (surveyResponseToSave.getId) {
+      const unfinishedSurveyResponse = await Database.executeSQLStatement(
         `
         SELECT *
         FROM answerlist
         WHERE answerlistid = $1::integer AND finishedOn IS NULL;
         `,
-        answerList.getId
+        surveyResponseToSave.getId
       )
-      isUnfinished = unfinishedAnswerlist.rowCount
+      isUnfinished = unfinishedSurveyResponse.rowCount
     }
 
     if (final === true) {
       if (isUnfinished === 1) {
         // update if isUnfinished exist
-        queryResult = await this.updateAnswerList('finalUpdate', answerList)
+        queryResult = await this.updateSurveyResponse('finalUpdate', surveyResponseToSave)
       } else {
         // insert if isUnfinished does not exist
-        queryResult = await this.updateAnswerList('finalInsert', answerList)
-        answerList.id = queryResult.rows[0].answerlistid
+        queryResult = await this.updateSurveyResponse('finalInsert', surveyResponseToSave)
+        surveyResponseToSave.id = queryResult.rows[0].answerlistid
       }
     } else {
-      queryResult = await this.updateAnswerList('insert', answerList)
-      answerList.id = queryResult.rows[0].answerlistid
+      queryResult = await this.updateSurveyResponse('insert', surveyResponseToSave)
+      surveyResponseToSave.id = queryResult.rows[0].answerlistid
     }
 
     if (queryResult.rowCount > 0) {
-      // const answerListId = queryResult.rows[0].answerlistid
-
       if (final === true) {
         if (isUnfinished === 1) {
           // update if isUnfinished exist
-          await this.updateAnswer('finalUpdate', answerList)
+          await this.updateAnswerOfSurveyResponse('finalUpdate', surveyResponseToSave)
         } else {
           // insert if isUnfinished does not exist
-          await this.updateAnswer('finalInsert', answerList)
+          await this.updateAnswerOfSurveyResponse('finalInsert', surveyResponseToSave)
         }
       } else {
-        await this.updateAnswer('insert', answerList)
+        await this.updateAnswerOfSurveyResponse('insert', surveyResponseToSave)
       }
       return true
     } else {
@@ -149,7 +147,7 @@ module.exports = class AnswerListDAO {
     }
   }
 
-  static async updateAnswerList (setting, answerList) {
+  static async updateSurveyResponse (setting, surveyToUpdate) {
     let queryResult = null
     switch (setting) {
       case 'finalUpdate':
@@ -159,53 +157,53 @@ module.exports = class AnswerListDAO {
           SET finishedon = current_timestamp
           WHERE answerlistid = $1::integer;
           `,
-          answerList.getId
+          surveyToUpdate.getId
         )
         return queryResult
       case 'finalInsert':
         queryResult = await Database.executeSQLStatement(
           'INSERT INTO answerlist(filledbyuser, finishedon) ' +
           'VALUES($1,current_timestamp) RETURNING answerlistid',
-          answerList.getFilledByUser.getId
+          surveyToUpdate.getFilledByUser.getId
         )
         return queryResult
       case 'insert':
         queryResult = await Database.executeSQLStatement(
           'INSERT INTO answerlist(filledbyuser) ' +
           'VALUES($1) RETURNING answerlistid',
-          answerList.getFilledByUser.getId
+          surveyToUpdate.getFilledByUser.getId
         )
         return queryResult
     }
   }
 
-  static async updateAnswer (setting, answerList) {
+  static async updateAnswerOfSurveyResponse (setting, surveyResponseWithAnswers) {
     switch (setting) {
       case 'finalUpdate':
-        for (const answer of answerList.getAnswers) {
+        for (const answer of surveyResponseWithAnswers.getAnswers) {
           await Database.executeSQLStatement(
             `
             UPDATE answer
             SET answer = $1
             WHERE answerlistid = $2 AND questionid = $3;
             `,
-            answer.getTextAnswer, answerList.getId, answer.getQuestion.getId
+            answer.getTextAnswer, surveyResponseWithAnswers.getId, answer.getQuestion.getId
           )
         }
         break
       case 'finalInsert':
-        for (const answer of answerList.getAnswers) {
+        for (const answer of surveyResponseWithAnswers.getAnswers) {
           await Database.executeSQLStatement(
             'INSERT INTO answer(questionid, answerlistid, answer) VALUES($1,$2,$3)',
-            answer.getQuestion.getId, answerList.getId, answer.getTextAnswer
+            answer.getQuestion.getId, surveyResponseWithAnswers.getId, answer.getTextAnswer
           )
         }
         break
       case 'insert':
-        for (const answer of answerList.getAnswers) {
+        for (const answer of surveyResponseWithAnswers.getAnswers) {
           await Database.executeSQLStatement(
             'INSERT INTO answer(questionid, answerlistid, answer) VALUES($1,$2,$3)',
-            answer.getQuestion.getId, answerList.getId, answer.getTextAnswer
+            answer.getQuestion.getId, surveyResponseWithAnswers.getId, answer.getTextAnswer
           )
         }
         break
