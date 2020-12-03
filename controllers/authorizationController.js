@@ -9,7 +9,7 @@ module.exports = class AuthorizationController {
     const password = req.body.password
 
     if (!username || !password) {
-      return ApiResponse.errorResponse(400, 'Username or password not supplied', res)
+      return ApiResponse.sendErrorApiReponse(400, 'Username or password not supplied', res)
     }
 
     UserDAO.getUserByUsername(username).then((user) => {
@@ -19,17 +19,17 @@ module.exports = class AuthorizationController {
             UserDAO.isUserAdmin(new User(user.getId, user.getUsername)).then((isUserAdmin) => {
               const token = AuthorizationUtil.createJWT(user.getId, user.getUsername, isUserAdmin)
 
-              return ApiResponse.successResponse({
+              return ApiResponse.sendSuccessApiResponse({
                 key: token,
                 isAdmin: isUserAdmin
               }, res)
             })
           } else {
-            return ApiResponse.errorResponse(403, 'Invalid password', res)
+            return ApiResponse.sendErrorApiReponse(403, 'Invalid password', res)
           }
         })
       } else {
-        return ApiResponse.errorResponse(404, 'User not found', res)
+        return ApiResponse.sendErrorApiReponse(404, 'User not found', res)
       }
     })
   }
@@ -39,7 +39,7 @@ module.exports = class AuthorizationController {
     const password = req.body.password
 
     if (!username || !password) {
-      return ApiResponse.errorResponse(404, 'Username or password not supplied', res)
+      return ApiResponse.sendErrorApiReponse(404, 'Username or password not supplied', res)
     }
     AuthorizationUtil.hashPassword(password).then((hashedPassword) => {
       // 0 because the id is not defined yet
@@ -51,7 +51,7 @@ module.exports = class AuthorizationController {
           UserDAO.saveUser(user, hashedPassword).then((success) => {
             if (success) {
               UserDAO.getUserByUsername(username).then((user) => {
-                return ApiResponse.successResponse({
+                return ApiResponse.sendSuccessApiResponse({
                   key: AuthorizationUtil.createJWT(user.getId, user.getUsername, false),
                   isAdmin: false
                 }, res)
@@ -59,7 +59,7 @@ module.exports = class AuthorizationController {
             }
           })
         } else {
-          return ApiResponse.errorResponse(303, 'User with the given username already exists', res)
+          return ApiResponse.sendErrorApiReponse(303, 'User with the given username already exists', res)
         }
       })
     })

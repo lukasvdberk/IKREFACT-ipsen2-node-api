@@ -9,9 +9,9 @@ module.exports = class UserController {
    */
   static allUsers (req, res, next) {
     UserDAO.getUsers().then(users => {
-      return ApiResponse.successResponse(users, res)
+      return ApiResponse.sendSuccessApiResponse(users, res)
     }).catch(e => {
-      return ApiResponse.errorResponse(500, 'Could not get users', res)
+      return ApiResponse.sendErrorApiReponse(500, 'Could not get users', res)
     })
   }
 
@@ -23,16 +23,16 @@ module.exports = class UserController {
   static changeUserToAdmin (req, res, next) {
     const username = req.body.username
     if (!username) {
-      return ApiResponse.errorResponse(400, 'You did not supply a username', res)
+      return ApiResponse.sendErrorApiReponse(400, 'You did not supply a username', res)
     }
     UserDAO.getUserByUsername(username).then((user) => {
       if (user === undefined) {
-        return ApiResponse.errorResponse(400, 'User not found', res)
+        return ApiResponse.sendErrorApiReponse(400, 'User not found', res)
       } else {
         UserDAO.makeUserAdmin(user.getId).then((success) => {
-          return ApiResponse.successResponse({}, res)
+          return ApiResponse.sendSuccessApiResponse({}, res)
         }).catch((ignored) => {
-          return ApiResponse.errorResponse(500, 'Failed to make user admin', res)
+          return ApiResponse.sendErrorApiReponse(500, 'Failed to make user admin', res)
         })
       }
     })
@@ -47,12 +47,12 @@ module.exports = class UserController {
     const username = req.body.username
     UserDAO.getUserByUsername(username).then((user) => {
       if (user === undefined) {
-        return ApiResponse.errorResponse(400, 'User not found', res)
+        return ApiResponse.sendErrorApiReponse(400, 'User not found', res)
       } else {
         UserDAO.makeAdminUser(user.getId).then((success) => {
-          return ApiResponse.successResponse({}, res)
+          return ApiResponse.sendSuccessApiResponse({}, res)
         }).catch((ignored) => {
-          return ApiResponse.errorResponse(500, 'Failed to make admin to user', res)
+          return ApiResponse.sendErrorApiReponse(500, 'Failed to make admin to user', res)
         })
       }
     })
