@@ -9,7 +9,7 @@ module.exports = class SurveyController {
     SurveyDAO.getAllSurveys().then((listOfSurveys) => {
       return ApiResponse.sendSuccessApiResponse(listOfSurveys, res)
     }).catch((ignored) => {
-      return ApiResponse.sendErrorApiReponse(500, 'Failed to retrieve questions', res)
+      return ApiResponse.sendErrorApiResponse(500, 'Failed to retrieve questions', res)
     })
   }
 
@@ -23,7 +23,7 @@ module.exports = class SurveyController {
     SurveyDAO.getSurveyById(surveyIdToSearch).then((surveyToReturn) => {
       return ApiResponse.sendSuccessApiResponse(surveyToReturn, res)
     }).catch((ignored) => {
-      return ApiResponse.sendErrorApiReponse(500, 'Failed to retrieve questions', res)
+      return ApiResponse.sendErrorApiResponse(500, 'Failed to retrieve questions', res)
     })
   }
 
@@ -47,14 +47,14 @@ module.exports = class SurveyController {
         if (success) {
           return ApiResponse.sendSuccessApiResponse({ saved: true }, res)
         } else {
-          return ApiResponse.sendErrorApiReponse(500, 'Could not save questionlist', res)
+          return ApiResponse.sendErrorApiResponse(500, 'Could not save questionlist', res)
         }
       }).catch((ignore) => {
-        return ApiResponse.sendErrorApiReponse(500, 'Could not save questionlist', res)
+        return ApiResponse.sendErrorApiResponse(500, 'Could not save questionlist', res)
       })
     } else {
       console.log(errorMessage)
-      return ApiResponse.sendErrorApiReponse(400, errorMessage, res)
+      return ApiResponse.sendErrorApiResponse(400, errorMessage, res)
     }
   }
 
@@ -69,7 +69,7 @@ module.exports = class SurveyController {
     const errorMessage = SurveyChecker.isValidSurvey(title, questionsReq)
     SurveyDAO.getSurveyById(id).then((foundSurvey) => {
       if (foundSurvey === undefined) {
-        return ApiResponse.sendErrorApiReponse(404, 'Question list not found', res)
+        return ApiResponse.sendErrorApiResponse(404, 'Question list not found', res)
       } else {
         if (errorMessage === undefined) {
           for (let i = 0; i < questionsReq.length; i++) {
@@ -82,13 +82,13 @@ module.exports = class SurveyController {
             if (success) {
               return ApiResponse.sendSuccessApiResponse({ saved: true }, res)
             } else {
-              return ApiResponse.sendErrorApiReponse(500, 'Could not save questionlist', res)
+              return ApiResponse.sendErrorApiResponse(500, 'Could not save questionlist', res)
             }
           }).catch((ignore) => {
-            return ApiResponse.sendErrorApiReponse(500, 'Could not save questionlist', res)
+            return ApiResponse.sendErrorApiResponse(500, 'Could not save questionlist', res)
           })
         } else {
-          return ApiResponse.sendErrorApiReponse(400, errorMessage, res)
+          return ApiResponse.sendErrorApiResponse(400, errorMessage, res)
         }
       }
     })

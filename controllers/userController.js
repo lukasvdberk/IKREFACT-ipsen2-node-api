@@ -11,7 +11,7 @@ module.exports = class UserController {
     UserDAO.getUsers().then(users => {
       return ApiResponse.sendSuccessApiResponse(users, res)
     }).catch(e => {
-      return ApiResponse.sendErrorApiReponse(500, 'Could not get users', res)
+      return ApiResponse.sendErrorApiResponse(500, 'Could not get users', res)
     })
   }
 
@@ -23,16 +23,16 @@ module.exports = class UserController {
   static changeUserToAdmin (req, res, next) {
     const username = req.body.username
     if (!username) {
-      return ApiResponse.sendErrorApiReponse(400, 'You did not supply a username', res)
+      return ApiResponse.sendErrorApiResponse(400, 'You did not supply a username', res)
     }
     UserDAO.getUserByUsername(username).then((user) => {
       if (user === undefined) {
-        return ApiResponse.sendErrorApiReponse(400, 'User not found', res)
+        return ApiResponse.sendErrorApiResponse(400, 'User not found', res)
       } else {
         UserDAO.makeUserAdmin(user.getId).then((success) => {
           return ApiResponse.sendSuccessApiResponse({}, res)
         }).catch((ignored) => {
-          return ApiResponse.sendErrorApiReponse(500, 'Failed to make user admin', res)
+          return ApiResponse.sendErrorApiResponse(500, 'Failed to make user admin', res)
         })
       }
     })
@@ -47,12 +47,12 @@ module.exports = class UserController {
     const username = req.body.username
     UserDAO.getUserByUsername(username).then((user) => {
       if (user === undefined) {
-        return ApiResponse.sendErrorApiReponse(400, 'User not found', res)
+        return ApiResponse.sendErrorApiResponse(400, 'User not found', res)
       } else {
         UserDAO.makeAdminUser(user.getId).then((success) => {
           return ApiResponse.sendSuccessApiResponse({}, res)
         }).catch((ignored) => {
-          return ApiResponse.sendErrorApiReponse(500, 'Failed to make admin to user', res)
+          return ApiResponse.sendErrorApiResponse(500, 'Failed to make admin to user', res)
         })
       }
     })

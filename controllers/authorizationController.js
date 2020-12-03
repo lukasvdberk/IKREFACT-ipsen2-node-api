@@ -9,7 +9,7 @@ module.exports = class AuthorizationController {
     const password = req.body.password
 
     if (!username || !password) {
-      return ApiResponse.sendErrorApiReponse(400, 'Username or password not supplied', res)
+      return ApiResponse.sendErrorApiResponse(400, 'Username or password not supplied', res)
     }
 
     UserDAO.getUserByUsername(username).then((user) => {
@@ -25,11 +25,11 @@ module.exports = class AuthorizationController {
               }, res)
             })
           } else {
-            return ApiResponse.sendErrorApiReponse(403, 'Invalid password', res)
+            return ApiResponse.sendErrorApiResponse(403, 'Invalid password', res)
           }
         })
       } else {
-        return ApiResponse.sendErrorApiReponse(404, 'User not found', res)
+        return ApiResponse.sendErrorApiResponse(404, 'User not found', res)
       }
     })
   }
@@ -39,7 +39,7 @@ module.exports = class AuthorizationController {
     const password = req.body.password
 
     if (!username || !password) {
-      return ApiResponse.sendErrorApiReponse(404, 'Username or password not supplied', res)
+      return ApiResponse.sendErrorApiResponse(404, 'Username or password not supplied', res)
     }
     AuthorizationUtil.hashPassword(password).then((hashedPassword) => {
       // 0 because the id is not defined yet
@@ -59,7 +59,7 @@ module.exports = class AuthorizationController {
             }
           })
         } else {
-          return ApiResponse.sendErrorApiReponse(303, 'User with the given username already exists', res)
+          return ApiResponse.sendErrorApiResponse(303, 'User with the given username already exists', res)
         }
       })
     })

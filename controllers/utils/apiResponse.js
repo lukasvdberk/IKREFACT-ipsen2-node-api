@@ -6,7 +6,7 @@ module.exports = class ApiResponse {
   * @param {Object} errorMessage - The error message.
   * @param {ExpressRes} res - A valid express response object to send the response with.
   */
-  static sendErrorApiReponse (statusCode, errorMessage, res) {
+  static sendErrorApiResponse (statusCode, errorMessage, res) {
     return res.status(statusCode).json({
       success: false,
       errorMessage: errorMessage

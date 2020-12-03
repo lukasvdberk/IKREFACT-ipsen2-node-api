@@ -17,7 +17,7 @@ module.exports = class SurveyResponseController {
     SurveyResponseDAO.getFinishedSurveyResponsesByUserId(user.getId).then((listOfSurvey) => {
       return ApiResponse.sendSuccessApiResponse(listOfSurvey, res)
     }).catch((ignored) => {
-      return ApiResponse.sendErrorApiReponse(500, 'Failed to retrieve filled in questionlist', res)
+      return ApiResponse.sendErrorApiResponse(500, 'Failed to retrieve filled in questionlist', res)
     })
   }
 
@@ -31,7 +31,7 @@ module.exports = class SurveyResponseController {
       return ApiResponse.sendSuccessApiResponse(surveyBydId, res)
     }).catch((ignored) => {
       console.log(ignored)
-      return ApiResponse.sendErrorApiReponse(500, 'Failed to retrieve filled in answerlist', res)
+      return ApiResponse.sendErrorApiResponse(500, 'Failed to retrieve filled in answerlist', res)
     })
   }
 
