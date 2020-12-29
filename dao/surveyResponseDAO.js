@@ -118,14 +118,14 @@ module.exports = class SurveyResponseDAO {
     if (final === true) {
       if (isUnfinished === 1) {
         // update if isUnfinished exist
-        queryResult = await this.updateSurveyResponse('finalUpdate', surveyResponseToSave)
+        queryResult = await this.markSurveyResponseAsDone()
       } else {
         // insert if isUnfinished does not exist
-        queryResult = await this.updateSurveyResponse('finalInsert', surveyResponseToSave)
+        queryResult = await this.saveNewSurveyResponseAndMarkAsDone(surveyResponseToSave)
         surveyResponseToSave.id = queryResult.rows[0].answerlistid
       }
     } else {
-      queryResult = await this.updateSurveyResponse('insert', surveyResponseToSave)
+      queryResult = await this.addSurveyResponse()
       surveyResponseToSave.id = queryResult.rows[0].answerlistid
     }
 
@@ -133,13 +133,13 @@ module.exports = class SurveyResponseDAO {
       if (final === true) {
         if (isUnfinished === 1) {
           // update if isUnfinished exist
-          await this.updateAnswerOfSurveyResponse('finalUpdate', surveyResponseToSave)
+          await this.updateAnswersOfSurveyResponse(surveyResponseToSave)
         } else {
           // insert if isUnfinished does not exist
-          await this.updateAnswerOfSurveyResponse('finalInsert', surveyResponseToSave)
+          await this.saveAnswersOfSurveyResponse(surveyResponseToSave)
         }
       } else {
-        await this.updateAnswerOfSurveyResponse('insert', surveyResponseToSave)
+        await this.saveNewSurveyResponse(surveyResponseToSave)
       }
       return true
     } else {
@@ -147,66 +147,53 @@ module.exports = class SurveyResponseDAO {
     }
   }
 
-  static async updateSurveyResponse (setting, surveyToUpdate) {
-    let queryResult = null
-    switch (setting) {
-      case 'finalUpdate':
-        queryResult = await Database.executeSQLStatement(
-          `
-          UPDATE answerlist
-          SET finishedon = current_timestamp
-          WHERE answerlistid = $1::integer;
-          `,
-          surveyToUpdate.getId
-        )
-        return queryResult
-      case 'finalInsert':
-        queryResult = await Database.executeSQLStatement(
-          'INSERT INTO answerlist(filledbyuser, finishedon) ' +
-          'VALUES($1,current_timestamp) RETURNING answerlistid',
-          surveyToUpdate.getFilledByUser.getId
-        )
-        return queryResult
-      case 'insert':
-        queryResult = await Database.executeSQLStatement(
-          'INSERT INTO answerlist(filledbyuser) ' +
-          'VALUES($1) RETURNING answerlistid',
-          surveyToUpdate.getFilledByUser.getId
-        )
-        return queryResult
-    }
-  }
-
-  static async updateAnswerOfSurveyResponse (setting, surveyResponseWithAnswers) {
-    switch (setting) {
-      case 'finalUpdate':
-        for (const answer of surveyResponseWithAnswers.getAnswers) {
-          await Database.executeSQLStatement(
-            `
+  // TODO add better naming for functions below
+  static async updateAnswersOfSurveyResponse (surveyResponseWithAnswers) {
+    for (const answer of surveyResponseWithAnswers.getAnswers) {
+      await Database.executeSQLStatement(
+        `
             UPDATE answer
             SET answer = $1
             WHERE answerlistid = $2 AND questionid = $3;
             `,
-            answer.getTextAnswer, surveyResponseWithAnswers.getId, answer.getQuestion.getId
-          )
-        }
-        break
-      case 'finalInsert':
-        for (const answer of surveyResponseWithAnswers.getAnswers) {
-          await Database.executeSQLStatement(
-            'INSERT INTO answer(questionid, answerlistid, answer) VALUES($1,$2,$3)',
-            answer.getQuestion.getId, surveyResponseWithAnswers.getId, answer.getTextAnswer
-          )
-        }
-        break
-      case 'insert':
-        for (const answer of surveyResponseWithAnswers.getAnswers) {
-          await Database.executeSQLStatement(
-            'INSERT INTO answer(questionid, answerlistid, answer) VALUES($1,$2,$3)',
-            answer.getQuestion.getId, surveyResponseWithAnswers.getId, answer.getTextAnswer
-          )
-        }
-        break
+        answer.getTextAnswer, surveyResponseWithAnswers.getId, answer.getQuestion.getId
+      )
     }
+  }
+
+  static async saveAnswersOfSurveyResponse (surveyResponseWithAnswers) {
+    for (const answer of surveyResponseWithAnswers.getAnswers) {
+      await Database.executeSQLStatement(
+        'INSERT INTO answer(questionid, answerlistid, answer) VALUES($1,$2,$3)',
+        answer.getQuestion.getId, surveyResponseWithAnswers.getId, answer.getTextAnswer
+      )
+    }
+  }
+
+  static async markSurveyResponseAsDone (surveyToUpdate) {
+    return await Database.executeSQLStatement(
+      `
+          UPDATE answerlist
+          SET finishedon = current_timestamp
+          WHERE answerlistid = $1::integer;
+          `,
+      surveyToUpdate.getId
+    )
+  }
+
+  static async saveNewSurveyResponseAndMarkAsDone (surveyToUpdate) {
+    return await Database.executeSQLStatement(
+      'INSERT INTO answerlist(filledbyuser, finishedon) ' +
+      'VALUES($1,current_timestamp) RETURNING answerlistid',
+      surveyToUpdate.getFilledByUser.getId
+    )
+  }
+
+  static async saveNewSurveyResponse (surveyToUpdate) {
+    return await Database.executeSQLStatement(
+      'INSERT INTO answerlist(filledbyuser) ' +
+      'VALUES($1) RETURNING answerlistid',
+      surveyToUpdate.getFilledByUser.getId
+    )
   }
 }
