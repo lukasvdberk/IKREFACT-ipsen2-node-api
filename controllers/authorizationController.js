@@ -2,22 +2,22 @@ const AuthorizationUtil = require('../util/auhtorizationUtil')
 const UserDAO = require('../dao/userDAO')
 const User = require('../models/user')
 const ApiResponse = require('./utils/apiResponse')
+const UserUtil = require('./utils/userUtil')
 
 module.exports = class AuthorizationController {
   static login (req, res, next) {
-    const username = req.body.username
-    const password = req.body.password
+    const userFromRequestBody = UserUtil.requestBodyToUserModel(req)
 
-    if (!username || !password) {
+    if (!userFromRequestBody) {
       return ApiResponse.sendErrorApiResponse(400, 'Username or password not supplied', res)
     }
 
-    UserDAO.getUserByUsername(username).then((user) => {
-      if (user !== undefined) {
-        AuthorizationUtil.validPassword(password, user.hashPassword).then((validPassword) => {
+    UserDAO.getUserByUsername(userFromRequestBody.username).then((userFromDatabase) => {
+      if (userFromDatabase !== undefined) {
+        AuthorizationUtil.validPassword(userFromRequestBody.password, userFromDatabase.hashPassword).then((validPassword) => {
           if (validPassword) {
-            UserDAO.isUserAdmin(new User(user.getId, user.getUsername)).then((isUserAdmin) => {
-              const token = AuthorizationUtil.createJWT(user.getId, user.getUsername, isUserAdmin)
+            UserDAO.isUserAdmin(new User(userFromDatabase.getId, userFromDatabase.getUsername)).then((isUserAdmin) => {
+              const token = AuthorizationUtil.createJWT(userFromDatabase.getId, userFromRequestBody.getUsername, isUserAdmin)
 
               return ApiResponse.sendSuccessApiResponse({
                 key: token,
@@ -35,22 +35,20 @@ module.exports = class AuthorizationController {
   }
 
   static register (req, res, next) {
-    const username = req.body.username
-    const password = req.body.password
+    const user = UserUtil.requestBodyToUserModel(req)
 
-    if (!username || !password) {
-      return ApiResponse.sendErrorApiResponse(404, 'Username or password not supplied', res)
+    if (!user) {
+      return ApiResponse.sendErrorApiResponse(400, 'Username or password not supplied', res)
     }
-    AuthorizationUtil.hashPassword(password).then((hashedPassword) => {
-      // 0 because the id is not defined yet
-      const user = new User(0, username)
 
-      UserDAO.getUserByUsername(username).then((userObj) => {
+    AuthorizationUtil.hashPassword(user.password).then((hashedPassword) => {
+      // 0 because the id is not defined yet
+      UserDAO.getUserByUsername(user.username).then((userObj) => {
         // undefined means not found
         if (userObj === undefined) {
           UserDAO.saveUser(user, hashedPassword).then((success) => {
             if (success) {
-              UserDAO.getUserByUsername(username).then((user) => {
+              UserDAO.getUserByUsername(user.username).then((user) => {
                 return ApiResponse.sendSuccessApiResponse({
                   key: AuthorizationUtil.createJWT(user.getId, user.getUsername, false),
                   isAdmin: false
