@@ -115,7 +115,6 @@ module.exports = class SurveyResponseDAO {
 
   static async updateSurveyResponse (surveyToUpdate, markSurveyAsDone) {
     try {
-      // only answers of a survey and weather its done can be updated
       if (markSurveyAsDone) {
         await this._markSurveyResponseAsDone(surveyToUpdate)
       }
