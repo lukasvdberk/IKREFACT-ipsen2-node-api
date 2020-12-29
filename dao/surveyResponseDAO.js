@@ -118,14 +118,14 @@ module.exports = class SurveyResponseDAO {
     if (final === true) {
       if (isUnfinished === 1) {
         // update if isUnfinished exist
-        queryResult = await this.markSurveyResponseAsDone()
+        queryResult = await this.markSurveyResponseAsDone(surveyResponseToSave)
       } else {
         // insert if isUnfinished does not exist
         queryResult = await this.saveNewSurveyResponseAndMarkAsDone(surveyResponseToSave)
         surveyResponseToSave.id = queryResult.rows[0].answerlistid
       }
     } else {
-      queryResult = await this.addSurveyResponse()
+      queryResult = await this.saveNewSurveyResponse(surveyResponseToSave)
       surveyResponseToSave.id = queryResult.rows[0].answerlistid
     }
 
@@ -139,7 +139,7 @@ module.exports = class SurveyResponseDAO {
           await this.saveAnswersOfSurveyResponse(surveyResponseToSave)
         }
       } else {
-        await this.saveNewSurveyResponse(surveyResponseToSave)
+        await this.saveAnswersOfSurveyResponse(surveyResponseToSave)
       }
       return true
     } else {
@@ -181,19 +181,19 @@ module.exports = class SurveyResponseDAO {
     )
   }
 
-  static async saveNewSurveyResponseAndMarkAsDone (surveyToUpdate) {
+  static async saveNewSurveyResponseAndMarkAsDone (surveyResponseToUpdate) {
     return await Database.executeSQLStatement(
       'INSERT INTO answerlist(filledbyuser, finishedon) ' +
       'VALUES($1,current_timestamp) RETURNING answerlistid',
-      surveyToUpdate.getFilledByUser.getId
+      surveyResponseToUpdate.getFilledByUser.getId
     )
   }
 
-  static async saveNewSurveyResponse (surveyToUpdate) {
+  static async saveNewSurveyResponse (surveyResponseToSave) {
     return await Database.executeSQLStatement(
       'INSERT INTO answerlist(filledbyuser) ' +
       'VALUES($1) RETURNING answerlistid',
-      surveyToUpdate.getFilledByUser.getId
+      surveyResponseToSave.getFilledByUser.getId
     )
   }
 }

@@ -1,5 +1,5 @@
 const SurveyResponseDAO = require('../dao/surveyResponseDAO')
-const Answer = require('../models/answer')
+const SurveyAnswer = require('../models/answer')
 const SurveyResponse = require('../models/surveyResponse')
 const SurveyQuestion = require('../models/surveyQuestion')
 const ApiResponse = require('./utils/apiResponse')
@@ -48,7 +48,7 @@ module.exports = class SurveyResponseController {
     if (answersReq.length > 0) {
       for (let i = 0; i < answersReq.length; i++) {
         const answer = answersReq[i]
-        const answerModel = new Answer(SurveyQuestion(answer.question.id, undefined, undefined), answer.textAnswer, undefined)
+        const answerModel = new SurveyAnswer(new SurveyQuestion(answer.question.id, undefined, undefined), answer.textAnswer, undefined)
         answers.push(answerModel)
       }
 
@@ -70,6 +70,7 @@ module.exports = class SurveyResponseController {
           })
         }
       }).catch((ignore) => {
+        console.log(ignore)
         return res.json({
           success: false,
           errorMessage: 'Could not save answerlist'
@@ -92,7 +93,7 @@ module.exports = class SurveyResponseController {
     if (answersReq.length > 0) {
       for (let i = 0; i < answersReq.length; i++) {
         const answer = answersReq[i]
-        const surveyAnswer = new Answer(new SurveyQuestion(answer.question.id, undefined, undefined), answer.textAnswer, undefined)
+        const surveyAnswer = new SurveyAnswer(new SurveyQuestion(answer.question.id, undefined, undefined), answer.textAnswer, undefined)
         answers.push(surveyAnswer)
       }
 
