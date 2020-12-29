@@ -67,8 +67,8 @@ module.exports = class SurveyController {
     const questionsModels = []
 
     const errorMessage = SurveyChecker.isValidSurvey(title, questionsReq)
-    SurveyDAO.getSurveyById(id).then((foundSurvey) => {
-      if (foundSurvey === undefined) {
+    SurveyDAO.getSurveyById(id).then((existingSurvey) => {
+      if (existingSurvey === undefined) {
         return ApiResponse.sendErrorApiResponse(404, 'Question list not found', res)
       } else {
         if (errorMessage === undefined) {

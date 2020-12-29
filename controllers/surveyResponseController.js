@@ -84,7 +84,7 @@ module.exports = class SurveyResponseController {
     }
   }
 
-  static finalizeExistingSurveyResponse (req, res, next) {
+  static markExistingSurveyResponseAsDone (req, res, next) {
     const user = req.user
     const answersReq = req.body.answers
     const answers = []
@@ -104,7 +104,7 @@ module.exports = class SurveyResponseController {
         surveyToFinalize = new SurveyResponse(undefined, user, undefined, answers)
       }
 
-      SurveyResponseDAO.saveSurveyResponse(surveyToFinalize, true).then((success) => {
+      SurveyResponseDAO.updateSurveyResponse(surveyToFinalize, true).then((success) => {
         if (success) {
           return res.json({
             success: true,

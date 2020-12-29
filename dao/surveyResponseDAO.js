@@ -95,60 +95,39 @@ module.exports = class SurveyResponseDAO {
   /**
    * Saves an answer list to the database.
    * @function
-   * @param {Survey} surveyResponseToSave - SurveyResponse to save.
-   * @param {boolean} final - Whether the saved SurveyResponse is the final version or not.
+   * @param {SurveyResponse} surveyResponseToSave - SurveyResponse to save.
+   * @param {boolean} markSurveyAsDone - Whether the saved SurveyResponse is the final version or not.
    * @returns {boolean} - returns if it was saved or  not.
    */
-  static async saveSurveyResponse (surveyResponseToSave, final) {
-    let queryResult = null
-    let isUnfinished = null
+  static async saveSurveyResponse (surveyResponseToSave, markSurveyAsDone) {
+    try {
+      const isSurveySaved = await this._saveNewSurveyResponse(surveyResponseToSave)
 
-    if (surveyResponseToSave.getId) {
-      const unfinishedSurveyResponse = await Database.executeSQLStatement(
-        `
-        SELECT *
-        FROM answerlist
-        WHERE answerlistid = $1::integer AND finishedOn IS NULL;
-        `,
-        surveyResponseToSave.getId
-      )
-      isUnfinished = unfinishedSurveyResponse.rowCount
-    }
-
-    if (final === true) {
-      if (isUnfinished === 1) {
-        // update if isUnfinished exist
-        queryResult = await this.markSurveyResponseAsDone(surveyResponseToSave)
-      } else {
-        // insert if isUnfinished does not exist
-        queryResult = await this.saveNewSurveyResponseAndMarkAsDone(surveyResponseToSave)
-        surveyResponseToSave.id = queryResult.rows[0].answerlistid
+      if (markSurveyAsDone && isSurveySaved) {
+        await this._markSurveyResponseAsDone(surveyResponseToSave)
       }
-    } else {
-      queryResult = await this.saveNewSurveyResponse(surveyResponseToSave)
-      surveyResponseToSave.id = queryResult.rows[0].answerlistid
-    }
 
-    if (queryResult.rowCount > 0) {
-      if (final === true) {
-        if (isUnfinished === 1) {
-          // update if isUnfinished exist
-          await this.updateAnswersOfSurveyResponse(surveyResponseToSave)
-        } else {
-          // insert if isUnfinished does not exist
-          await this.saveAnswersOfSurveyResponse(surveyResponseToSave)
-        }
-      } else {
-        await this.saveAnswersOfSurveyResponse(surveyResponseToSave)
+      return isSurveySaved
+    } catch (ignored) {
+      return false
+    }
+  }
+
+  static async updateSurveyResponse (surveyToUpdate, markSurveyAsDone) {
+    try {
+      // only answers of a survey and weather its done can be updated
+      if (markSurveyAsDone) {
+        await this._markSurveyResponseAsDone(surveyToUpdate)
       }
+      await this._updateAnswersOfSurveyResponse(surveyToUpdate)
       return true
-    } else {
+    } catch (ignored) {
       return false
     }
   }
 
   // TODO add better naming for functions below
-  static async updateAnswersOfSurveyResponse (surveyResponseWithAnswers) {
+  static async _updateAnswersOfSurveyResponse (surveyResponseWithAnswers) {
     for (const answer of surveyResponseWithAnswers.getAnswers) {
       await Database.executeSQLStatement(
         `
@@ -161,7 +140,7 @@ module.exports = class SurveyResponseDAO {
     }
   }
 
-  static async saveAnswersOfSurveyResponse (surveyResponseWithAnswers) {
+  static async _saveAnswersOfSurveyResponse (surveyResponseWithAnswers) {
     for (const answer of surveyResponseWithAnswers.getAnswers) {
       await Database.executeSQLStatement(
         'INSERT INTO answer(questionid, answerlistid, answer) VALUES($1,$2,$3)',
@@ -170,7 +149,7 @@ module.exports = class SurveyResponseDAO {
     }
   }
 
-  static async markSurveyResponseAsDone (surveyToUpdate) {
+  static async _markSurveyResponseAsDone (surveyToUpdate) {
     return await Database.executeSQLStatement(
       `
           UPDATE answerlist
@@ -181,19 +160,26 @@ module.exports = class SurveyResponseDAO {
     )
   }
 
-  static async saveNewSurveyResponseAndMarkAsDone (surveyResponseToUpdate) {
-    return await Database.executeSQLStatement(
-      'INSERT INTO answerlist(filledbyuser, finishedon) ' +
-      'VALUES($1,current_timestamp) RETURNING answerlistid',
-      surveyResponseToUpdate.getFilledByUser.getId
-    )
-  }
+  /**
+   * Saves an survey response to the database.
+   * @function
+   * @param {Survey} surveyResponseToSave - SurveyResponse to save.
+   * @returns {boolean} - returns if it was saved or  not.
+   * */
+  static async _saveNewSurveyResponse (surveyResponseToSave) {
+    try {
+      const insertResult = await Database.executeSQLStatement(
+        'INSERT INTO answerlist(filledbyuser) ' +
+        'VALUES($1) RETURNING answerlistid',
+        surveyResponseToSave.getFilledByUser.getId
+      )
 
-  static async saveNewSurveyResponse (surveyResponseToSave) {
-    return await Database.executeSQLStatement(
-      'INSERT INTO answerlist(filledbyuser) ' +
-      'VALUES($1) RETURNING answerlistid',
-      surveyResponseToSave.getFilledByUser.getId
-    )
+      // add newly set Id to model for the answers of the survey
+      surveyResponseToSave.id = insertResult.rows[0].answerlistid
+      await this._saveAnswersOfSurveyResponse(surveyResponseToSave)
+      return true
+    } catch (ignored) {
+      return false
+    }
   }
 }
