@@ -101,10 +101,10 @@ module.exports = class SurveyResponseDAO {
    */
   static async saveSurveyResponse (surveyResponseToSave, markSurveyAsDone) {
     try {
-      const isSurveySaved = await this._saveNewSurveyResponse(surveyResponseToSave)
+      const isSurveySaved = await SurveyResponseDAO._saveNewSurveyResponse(surveyResponseToSave)
 
       if (markSurveyAsDone && isSurveySaved) {
-        await this._markSurveyResponseAsDone(surveyResponseToSave)
+        await SurveyResponseDAO._markSurveyResponseAsDone(surveyResponseToSave)
       }
 
       return isSurveySaved
@@ -116,9 +116,9 @@ module.exports = class SurveyResponseDAO {
   static async updateSurveyResponse (surveyToUpdate, markSurveyAsDone) {
     try {
       if (markSurveyAsDone) {
-        await this._markSurveyResponseAsDone(surveyToUpdate)
+        await SurveyResponseDAO._markSurveyResponseAsDone(surveyToUpdate)
       }
-      await this._updateAnswersOfSurveyResponse(surveyToUpdate)
+      await SurveyResponseDAO._updateAnswersOfSurveyResponse(surveyToUpdate)
       return true
     } catch (ignored) {
       return false
@@ -175,7 +175,7 @@ module.exports = class SurveyResponseDAO {
 
       // add newly set Id to model for the answers of the survey
       surveyResponseToSave.id = insertResult.rows[0].answerlistid
-      await this._saveAnswersOfSurveyResponse(surveyResponseToSave)
+      await SurveyResponseDAO._saveAnswersOfSurveyResponse(surveyResponseToSave)
       return true
     } catch (ignored) {
       return false
