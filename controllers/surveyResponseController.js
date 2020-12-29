@@ -3,6 +3,7 @@ const SurveyAnswer = require('../models/answer')
 const SurveyResponse = require('../models/surveyResponse')
 const SurveyQuestion = require('../models/surveyQuestion')
 const ApiResponse = require('./utils/apiResponse')
+const SurveyResponseUtil = require('./utils/surveyResponseUtil')
 
 module.exports = class SurveyResponseController {
   /**
@@ -23,7 +24,6 @@ module.exports = class SurveyResponseController {
 
   static getSurveyResponseById (req, res, next) {
     // fetches surveyresponse by survey id.
-    // TODO haal vragenlijsten op met questionid en ingevulde vragen
     const surveyId = req.params.questionListId
     const user = req.user
 
@@ -41,24 +41,11 @@ module.exports = class SurveyResponseController {
    * @returns {json} - Returns a response.
    */
   static saveSurveyResponse (req, res, next) {
-    const user = req.user
-    const answersReq = req.body.answers
-    const answers = []
+    const surveyResponseToSave = SurveyResponseUtil.requestBodyToSurveyModel(req)
 
-    if (answersReq.length > 0) {
-      for (let i = 0; i < answersReq.length; i++) {
-        const answer = answersReq[i]
-        const answerModel = new SurveyAnswer(new SurveyQuestion(answer.question.id, undefined, undefined), answer.textAnswer, undefined)
-        answers.push(answerModel)
-      }
-
-      let surveyResponseToSave = null
-      const existingSurveyId = req.id
-
-      surveyResponseToSave = new SurveyResponse(existingSurveyId, user, undefined, answers)
-
-      SurveyResponseDAO.saveSurveyResponse(surveyResponseToSave, false).then((success) => {
-        if (success) {
+    if (surveyResponseToSave.answers.length > 0) {
+      SurveyResponseDAO.saveSurveyResponse(surveyResponseToSave, false).then((isSaved) => {
+        if (isSaved) {
           return res.json({
             success: true,
             saved: true
@@ -84,28 +71,12 @@ module.exports = class SurveyResponseController {
     }
   }
 
-  static markExistingSurveyResponseAsDone (req, res, next) {
-    const user = req.user
-    const answersReq = req.body.answers
-    const answers = []
-    const existingSurveyId = req.body.id
+  static editSurveyResponseAndMarkAsDone (req, res, next) {
+    const surveyResponseToUpdate = SurveyResponseUtil.requestBodyToSurveyModel(req)
 
-    if (answersReq.length > 0) {
-      for (let i = 0; i < answersReq.length; i++) {
-        const answer = answersReq[i]
-        const surveyAnswer = new SurveyAnswer(new SurveyQuestion(answer.question.id, undefined, undefined), answer.textAnswer, undefined)
-        answers.push(surveyAnswer)
-      }
-
-      let surveyToFinalize = null
-      if (existingSurveyId !== 0) {
-        surveyToFinalize = new SurveyResponse(existingSurveyId, user, undefined, answers)
-      } else {
-        surveyToFinalize = new SurveyResponse(undefined, user, undefined, answers)
-      }
-
-      SurveyResponseDAO.updateSurveyResponse(surveyToFinalize, true).then((success) => {
-        if (success) {
+    if (surveyResponseToUpdate.answers.length > 0) {
+      SurveyResponseDAO.updateSurveyResponse(surveyResponseToUpdate, true).then((isUpdated) => {
+        if (isUpdated) {
           return res.json({
             success: true,
             saved: true
