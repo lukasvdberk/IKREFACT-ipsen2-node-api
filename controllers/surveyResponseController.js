@@ -13,9 +13,8 @@ module.exports = class SurveyResponseController {
    * @
    */
   static surveyResponsesFromUser (req, res, next) {
-    // survey responses by user
-    const user = req.user
-    SurveyResponseDAO.getFinishedSurveyResponsesByUserId(user.getId).then((listOfSurvey) => {
+    const userToRetrieveFilledSurveysFrom = req.user
+    SurveyResponseDAO.getFinishedSurveyResponsesByUserId(userToRetrieveFilledSurveysFrom.getId).then((listOfSurvey) => {
       return ApiResponse.sendSuccessApiResponse(listOfSurvey, res)
     }).catch((ignored) => {
       return ApiResponse.sendErrorApiResponse(500, 'Failed to retrieve filled in questionlist', res)
@@ -23,11 +22,10 @@ module.exports = class SurveyResponseController {
   }
 
   static getSurveyResponseById (req, res, next) {
-    // fetches surveyresponse by survey id.
-    const surveyId = req.params.questionListId
+    const surveyIdToRetrieveById = req.params.questionListId
     const user = req.user
 
-    SurveyResponseDAO.getExistingSurveyResponseFromUser(user, surveyId).then((surveyBydId) => {
+    SurveyResponseDAO.getExistingSurveyResponseFromUser(user, surveyIdToRetrieveById).then((surveyBydId) => {
       return ApiResponse.sendSuccessApiResponse(surveyBydId, res)
     }).catch((ignored) => {
       console.log(ignored)

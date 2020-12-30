@@ -14,7 +14,7 @@ module.exports = class SurveyAnswer {
 
   /**
    * @get
-   * @return {Question} question - The question model which this objects answers
+   * @return {Question} question - The question model which this object answers
    */
   get getQuestion () {
     return this.question

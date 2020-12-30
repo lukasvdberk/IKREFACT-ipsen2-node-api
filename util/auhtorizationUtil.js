@@ -41,11 +41,9 @@ module.exports = class AuthorizationUtil {
    * @returns {string} - The generated jwt token
    */
   static createJWT (userId, username, isAdmin) {
-    const token = jwt.sign({ userId, username, isAdmin }, this.getJWTKey(), {
+    return jwt.sign({ userId, username, isAdmin }, this.getJWTKey(), {
       algorithm: 'HS256'
     })
-
-    return token
   }
 
   /**
@@ -71,7 +69,7 @@ module.exports = class AuthorizationUtil {
   }
 
   /**
-   * Check wheather user is authenticated as a user. Recevies standard express objects and calls next with success.
+   * Check whether user is authenticated as a user. Receives standard express objects and calls next with success.
    * sets user model in req.user
    * @function
    */
@@ -81,6 +79,8 @@ module.exports = class AuthorizationUtil {
     const jwtPayload = AuthorizationUtil.extractJWTInformation(jwtToken)
 
     if (jwtPayload !== undefined) {
+      // so you can use get user who made the request in the endpoint
+      // since it will receive the same req object
       req.user = new User(jwtPayload.userId, jwtPayload.username)
       return next()
     } else {
@@ -92,7 +92,7 @@ module.exports = class AuthorizationUtil {
   }
 
   /**
-   * Check wheather user is authenticated as a admin. Recevies standard express objects and calls next with success.
+   * Check wheather user is authenticated as a admin. Receives standard express objects and calls next with success.
    * sets user model in req.user and req.isAdmin
    * @function
    */
@@ -105,6 +105,8 @@ module.exports = class AuthorizationUtil {
       const isAdmin = jwtPayload.isAdmin
 
       if (isAdmin) {
+        // so you can use get user who made the request in the endpoint
+        // since it will receive the same req object
         req.user = new Admin(jwtPayload.userId, jwtPayload.username)
 
         return next()

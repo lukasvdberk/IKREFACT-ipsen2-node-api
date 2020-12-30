@@ -6,7 +6,7 @@ const Database = require('./database')
 module.exports = class SurveyDAO {
   /**
    * Returns a list of surveys.
-   * NOTE this will only return survey metadata (like title createon etc) if you also want the questions call getAllQuestionListsWithQuestions
+   * NOTE this will only return survey metadata (like title createdOn etc) if you also want the questions and the madeBy call getSurveyBydId
    * @function
    * @returns {SurveyQuestion[]} - Array of Surveys without questions
    */
@@ -16,9 +16,12 @@ module.exports = class SurveyDAO {
     )
 
     const surveyList = []
-    // TODO set madeby correctly
+    // the two undefined fields are madeBy and questions.
+    //  - Don't query for all the questions for a given survey since that takes to long (is tested)
+    //  - Don't set madeBy since I know where this function will be used will not use madeBy
+    // This is also documented in the JSDoc
     activeSurveysQueryResult.rows.forEach((row) => {
-      surveyList.push(new SurveyQuestion(
+      surveyList.push(new Survey(
         row.questionlistid,
         row.title,
         undefined,

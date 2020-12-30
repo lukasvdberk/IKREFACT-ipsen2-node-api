@@ -19,10 +19,10 @@ module.exports = class User {
   }
 
   set hashedPassword (password) {
-    this.hashedPassword = password
+    this._hashedPassword = password
   }
 
   get hashedPassword () {
-    return this.hashedPassword
+    return this._hashedPassword
   }
 }

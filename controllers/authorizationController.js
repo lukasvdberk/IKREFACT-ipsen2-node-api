@@ -42,9 +42,7 @@ module.exports = class AuthorizationController {
     }
 
     AuthorizationUtil.hashPassword(user.password).then((hashedPassword) => {
-      // 0 because the id is not defined yet
       UserDAO.getUserByUsername(user.username).then((userObj) => {
-        // undefined means not found
         if (userObj === undefined) {
           UserDAO.saveUser(user, hashedPassword).then((success) => {
             if (success) {
