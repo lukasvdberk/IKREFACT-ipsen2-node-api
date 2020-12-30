@@ -32,45 +32,6 @@ module.exports = class SurveyDAO {
   }
 
   /**
-   * Returns a list of surveys with all questions incluced.
-   * @function
-   * @returns {Survey[]} - Array of Surveys without questions
-   */
-  static async getAllSurveysWithQuestions () {
-    const activeSurveysQueryResult = await Database.executeSQLStatement(
-      'SELECT * FROM questionlist WHERE isactive = true'
-    )
-
-    const listOfSurveys = []
-    // TODO set madeby correctly
-    for (let i = 0; i < activeSurveysQueryResult.rows.length; i++) {
-      // adds questions to the questionlist
-      const row = activeSurveysQueryResult.rows[i]
-      const questionsDb = await Database.executeSQLStatement(
-        'SELECT * FROM question WHERE questionidlistid=$1::integer',
-        row.questionlistid
-      )
-
-      const questions = []
-      questionsDb.rows.forEach((questionRow) => {
-        questions.push(new SurveyQuestion(questionRow.questionId, questionRow.description, questionRow.type))
-      })
-
-      const survey = new Survey(
-        row.questionlistid,
-        row.title,
-        undefined,
-        row.createdon,
-        questions,
-        row.isactive
-      )
-      listOfSurveys.push(survey)
-    }
-
-    return listOfSurveys
-  }
-
-  /**
    * Gets a specific survey by id.
    * @function
    * @param {number} surveyId - ID of the survey to get from the database.
