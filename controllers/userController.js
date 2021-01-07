@@ -7,12 +7,13 @@ module.exports = class UserController {
    * @function
    * @returns {json} - response
    */
-  static allUsers (req, res, next) {
-    UserDAO.getUsers().then(users => {
+  static async allUsers (req, res, next) {
+    try {
+      const users = await UserDAO.getUsers()
       return ApiResponse.sendSuccessApiResponse(users, res)
-    }).catch(e => {
+    } catch (ignored) {
       return ApiResponse.sendErrorApiResponse(500, 'Could not get users', res)
-    })
+    }
   }
 
   /**
@@ -20,22 +21,24 @@ module.exports = class UserController {
    * @function
    * @returns {json} - Returns a response in json format.
    */
-  static changeUserToAdmin (req, res, next) {
-    const username = req.body.username
-    if (!username) {
-      return ApiResponse.sendErrorApiResponse(400, 'You did not supply a username', res)
-    }
-    UserDAO.getUserByUsername(username).then((user) => {
+  static async changeUserToAdmin (req, res, next) {
+    try {
+      const username = req.body.username
+      if (!username) {
+        return ApiResponse.sendErrorApiResponse(400, 'You did not supply a username', res)
+      }
+      const user = await UserDAO.getUserByUsername(username)
       if (user === undefined) {
         return ApiResponse.sendErrorApiResponse(400, 'User not found', res)
       } else {
-        UserDAO.makeUserAdmin(user.getId).then((success) => {
+        const userIsUpdated = await UserDAO.makeUserAdmin(user.getId)
+        if (userIsUpdated) {
           return ApiResponse.sendSuccessApiResponse({}, res)
-        }).catch((ignored) => {
-          return ApiResponse.sendErrorApiResponse(500, 'Failed to make user admin', res)
-        })
+        }
       }
-    })
+    } catch (ignored) {
+      return ApiResponse.sendErrorApiResponse(500, 'Failed to make user admin', res)
+    }
   }
 
   /**
@@ -43,18 +46,20 @@ module.exports = class UserController {
    * @function
    * @returns {json} - Returns a response in json format.
    */
-  static changeAdminToUser (req, res, next) {
-    const username = req.body.username
-    UserDAO.getUserByUsername(username).then((user) => {
+  static async changeAdminToUser (req, res, next) {
+    try {
+      const username = req.body.username
+      const user = UserDAO.getUserByUsername(username)
       if (user === undefined) {
         return ApiResponse.sendErrorApiResponse(400, 'User not found', res)
       } else {
-        UserDAO.makeAdminUser(user.getId).then((success) => {
+        const userIsUpdated = await UserDAO.makeAdminUser(user.getId)
+        if (userIsUpdated) {
           return ApiResponse.sendSuccessApiResponse({}, res)
-        }).catch((ignored) => {
-          return ApiResponse.sendErrorApiResponse(500, 'Failed to make admin to user', res)
-        })
+        }
       }
-    })
+    } catch (ignored) {
+      return ApiResponse.sendErrorApiResponse(500, 'Failed to make admin to user', res)
+    }
   }
 }

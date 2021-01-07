@@ -12,25 +12,25 @@ module.exports = class SurveyResponseController {
    * @returns {json} response
    * @
    */
-  static surveyResponsesFromUser (req, res, next) {
-    const userToRetrieveFilledSurveysFrom = req.user
-    SurveyResponseDAO.getFinishedSurveyResponsesByUserId(userToRetrieveFilledSurveysFrom.getId).then((listOfSurvey) => {
+  static async surveyResponsesFromUser (req, res, next) {
+    try {
+      const userToRetrieveFilledSurveysFrom = req.user
+      const listOfSurvey = await SurveyResponseDAO.getFinishedSurveyResponsesByUserId(userToRetrieveFilledSurveysFrom.getId)
       return ApiResponse.sendSuccessApiResponse(listOfSurvey, res)
-    }).catch((ignored) => {
+    } catch (ignored) {
       return ApiResponse.sendErrorApiResponse(500, 'Failed to retrieve filled in questionlist', res)
-    })
+    }
   }
 
-  static getSurveyResponseById (req, res, next) {
-    const surveyIdToRetrieveById = req.params.questionListId
-    const user = req.user
-
-    SurveyResponseDAO.getExistingSurveyResponseFromUser(user, surveyIdToRetrieveById).then((surveyBydId) => {
+  static async getSurveyResponseById (req, res, next) {
+    try {
+      const surveyIdToRetrieveById = req.params.questionListId
+      const user = req.user
+      const surveyBydId = await SurveyResponseDAO.getExistingSurveyResponseFromUser(user, surveyIdToRetrieveById)
       return ApiResponse.sendSuccessApiResponse(surveyBydId, res)
-    }).catch((ignored) => {
-      console.log(ignored)
+    } catch (ignored) {
       return ApiResponse.sendErrorApiResponse(500, 'Failed to retrieve filled in answerlist', res)
-    })
+    }
   }
 
   /**
@@ -38,11 +38,12 @@ module.exports = class SurveyResponseController {
    * @function
    * @returns {json} - Returns a response.
    */
-  static saveSurveyResponse (req, res, next) {
+  static async saveSurveyResponse (req, res, next) {
     const surveyResponseToSave = SurveyResponseUtil.requestBodyToSurveyModel(req)
 
     if (surveyResponseToSave.answers.length > 0) {
-      SurveyResponseDAO.saveSurveyResponse(surveyResponseToSave, false).then((isSaved) => {
+      try {
+        const isSaved = await SurveyResponseDAO.saveSurveyResponse(surveyResponseToSave, false)
         if (isSaved) {
           return res.json({
             success: true,
@@ -54,13 +55,12 @@ module.exports = class SurveyResponseController {
             errorMessage: 'Could not save data'
           })
         }
-      }).catch((ignore) => {
-        console.log(ignore)
+      } catch (ignored) {
         return res.json({
           success: false,
           errorMessage: 'Could not save answerlist'
         })
-      })
+      }
     } else {
       return res.status(400).json({
         success: false,
@@ -69,11 +69,12 @@ module.exports = class SurveyResponseController {
     }
   }
 
-  static editSurveyResponseAndMarkAsDone (req, res, next) {
+  static async editSurveyResponseAndMarkAsDone (req, res, next) {
     const surveyResponseToUpdate = SurveyResponseUtil.requestBodyToSurveyModel(req)
 
     if (surveyResponseToUpdate.answers.length > 0) {
-      SurveyResponseDAO.updateSurveyResponse(surveyResponseToUpdate, true).then((isUpdated) => {
+      try {
+        const isUpdated = await SurveyResponseDAO.updateSurveyResponse(surveyResponseToUpdate, true)
         if (isUpdated) {
           return res.json({
             success: true,
@@ -85,12 +86,12 @@ module.exports = class SurveyResponseController {
             errorMessage: 'Could not save data'
           })
         }
-      }).catch((ignore) => {
+      } catch (ignored) {
         return res.json({
           success: false,
           errorMessage: 'Could not save answerlist'
         })
-      })
+      }
     } else {
       return res.status(400).json({
         success: false,

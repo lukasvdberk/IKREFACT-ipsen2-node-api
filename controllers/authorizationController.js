@@ -5,59 +5,50 @@ const ApiResponse = require('./utils/apiResponse')
 const UserUtil = require('./utils/userUtil')
 
 module.exports = class AuthorizationController {
-  static login (req, res, next) {
+  static async login (req, res, next) {
     const userFromRequestBody = UserUtil.requestBodyToUserModel(req)
 
-    if (!userFromRequestBody) {
-      return ApiResponse.sendErrorApiResponse(400, 'Username or password not supplied', res)
-    }
+    const userFromDatabase = await UserDAO.getUserByUsername(userFromRequestBody.username)
+    if (userFromDatabase !== undefined) {
+      const validPassword = await AuthorizationUtil.validPassword(userFromRequestBody.password, userFromDatabase.hashPassword)
+      if (validPassword) {
+        const isUserAdmin = await UserDAO.isUserAdmin(new User(userFromDatabase.getId, userFromDatabase.getUsername))
+        const token = AuthorizationUtil.createJWT(userFromDatabase.getId, userFromRequestBody.getUsername, isUserAdmin)
 
-    UserDAO.getUserByUsername(userFromRequestBody.username).then((userFromDatabase) => {
-      if (userFromDatabase !== undefined) {
-        AuthorizationUtil.validPassword(userFromRequestBody.password, userFromDatabase.hashPassword).then((validPassword) => {
-          if (validPassword) {
-            UserDAO.isUserAdmin(new User(userFromDatabase.getId, userFromDatabase.getUsername)).then((isUserAdmin) => {
-              const token = AuthorizationUtil.createJWT(userFromDatabase.getId, userFromRequestBody.getUsername, isUserAdmin)
-
-              return ApiResponse.sendSuccessApiResponse({
-                key: token,
-                isAdmin: isUserAdmin
-              }, res)
-            })
-          } else {
-            return ApiResponse.sendErrorApiResponse(403, 'Invalid password', res)
-          }
-        })
+        return ApiResponse.sendSuccessApiResponse({
+          key: token,
+          isAdmin: isUserAdmin
+        }, res)
       } else {
-        return ApiResponse.sendErrorApiResponse(404, 'User not found', res)
+        return ApiResponse.sendErrorApiResponse(403, 'Invalid password', res)
       }
-    })
+    } else {
+      return ApiResponse.sendErrorApiResponse(404, 'User not found', res)
+    }
   }
 
-  static register (req, res, next) {
+  static async register (req, res, next) {
     const user = UserUtil.requestBodyToUserModel(req)
 
     if (!user) {
       return ApiResponse.sendErrorApiResponse(400, 'Username or password not supplied', res)
     }
 
-    AuthorizationUtil.hashPassword(user.password).then((hashedPassword) => {
-      UserDAO.getUserByUsername(user.username).then((userObj) => {
-        if (userObj === undefined) {
-          UserDAO.saveUser(user, hashedPassword).then((success) => {
-            if (success) {
-              UserDAO.getUserByUsername(user.username).then((user) => {
-                return ApiResponse.sendSuccessApiResponse({
-                  key: AuthorizationUtil.createJWT(user.getId, user.getUsername, false),
-                  isAdmin: false
-                }, res)
-              })
-            }
+    const hashedPassword = await AuthorizationUtil.hashPassword(user.password)
+    const userObj = UserDAO.getUserByUsername(user.username)
+    if (userObj === undefined) {
+      UserDAO.saveUser(user, hashedPassword).then((success) => {
+        if (success) {
+          UserDAO.getUserByUsername(user.username).then((user) => {
+            return ApiResponse.sendSuccessApiResponse({
+              key: AuthorizationUtil.createJWT(user.getId, user.getUsername, false),
+              isAdmin: false
+            }, res)
           })
-        } else {
-          return ApiResponse.sendErrorApiResponse(303, 'User with the given username already exists', res)
         }
       })
-    })
+    } else {
+      return ApiResponse.sendErrorApiResponse(303, 'User with the given username already exists', res)
+    }
   }
 }
