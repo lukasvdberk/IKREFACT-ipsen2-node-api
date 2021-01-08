@@ -12,7 +12,8 @@ module.exports = class SurveyResponseController {
   static async surveyResponsesFromUser (req, res) {
     try {
       const userToRetrieveFilledSurveysFrom = req.user
-      const listOfSurvey = await SurveyResponseDAO.getFinishedSurveyResponsesByUserId(userToRetrieveFilledSurveysFrom.getId)
+      const listOfSurvey = await SurveyResponseDAO.getFinishedSurveyResponsesByUserId(userToRetrieveFilledSurveysFrom.id)
+
       return ApiResponse.sendSuccessApiResponse(listOfSurvey, res)
     } catch (ignored) {
       return ApiResponse.sendErrorApiResponse(500, 'Failed to retrieve filled in questionlist', res)
@@ -24,6 +25,7 @@ module.exports = class SurveyResponseController {
       const surveyIdToRetrieveById = req.params.questionListId
       const user = req.user
       const surveyBydId = await SurveyResponseDAO.getExistingSurveyResponseFromUser(user, surveyIdToRetrieveById)
+
       return ApiResponse.sendSuccessApiResponse(surveyBydId, res)
     } catch (ignored) {
       return ApiResponse.sendErrorApiResponse(500, 'Failed to retrieve filled in answerlist', res)
@@ -41,6 +43,7 @@ module.exports = class SurveyResponseController {
     if (surveyResponseToSave.answers.length > 0) {
       try {
         const isSaved = await SurveyResponseDAO.saveSurveyResponse(surveyResponseToSave, false)
+
         if (isSaved) {
           return res.json({
             success: true,

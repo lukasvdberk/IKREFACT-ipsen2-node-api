@@ -12,7 +12,7 @@ module.exports = class UserDAO {
   static async saveUser (user, hashedPassword) {
     const queryResult = await Database.executeSQLStatement(
       'INSERT INTO "User"(username, password) VALUES($1,$2)',
-      user.getUsername, hashedPassword
+      user.username, hashedPassword
     )
 
     return queryResult.rowCount === 1
@@ -35,9 +35,9 @@ module.exports = class UserDAO {
 
     if (userQueryResult.rowCount > 0) {
       const row = userQueryResult.rows[0]
-
       const user = new User(row.userid, row.username)
       user.hashPassword = row.password
+
       return user
     }
 
@@ -94,7 +94,7 @@ module.exports = class UserDAO {
       'FROM "User" ' +
       'LEFT JOIN adminuser ON "User".userid = adminuser.userid'
     )
-    return queryResult.rows.map(user => new User(user.adminuserid, user.username)
-    )
+
+    return queryResult.rows.map(user => new User(user.adminuserid, user.username))
   }
 }

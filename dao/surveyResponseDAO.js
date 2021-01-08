@@ -57,7 +57,7 @@ module.exports = class SurveyResponseDAO {
       JOIN questionlist ql ON ql.questionlistid = q.questionidlistid
       WHERE answerlist.filledbyuser=$1::integer AND ql.questionlistid=$2::integer   
       `,
-      user.getId, surveyId
+      user.id, surveyId
     )
 
     // TODO set madeby correctly
@@ -127,23 +127,23 @@ module.exports = class SurveyResponseDAO {
 
   // TODO add better naming for functions below
   static async _updateAnswersOfSurveyResponse (surveyResponseWithAnswers) {
-    for (const answer of surveyResponseWithAnswers.getAnswers) {
+    for (const answer of surveyResponseWithAnswers.answers) {
       await Database.executeSQLStatement(
         `
             UPDATE answer
             SET answer = $1
             WHERE answerlistid = $2 AND questionid = $3;
             `,
-        answer.getTextAnswer, surveyResponseWithAnswers.getId, answer.getQuestion.getId
+        answer.textAnswer, surveyResponseWithAnswers.id, answer.question.id
       )
     }
   }
 
   static async _saveAnswersOfSurveyResponse (surveyResponseWithAnswers) {
-    for (const answer of surveyResponseWithAnswers.getAnswers) {
+    for (const answer of surveyResponseWithAnswers.answers) {
       await Database.executeSQLStatement(
         'INSERT INTO answer(questionid, answerlistid, answer) VALUES($1,$2,$3)',
-        answer.getQuestion.getId, surveyResponseWithAnswers.getId, answer.getTextAnswer
+        answer.question.id, surveyResponseWithAnswers.id, answer.textAnswer
       )
     }
   }
@@ -155,14 +155,14 @@ module.exports = class SurveyResponseDAO {
           SET finishedon = current_timestamp
           WHERE answerlistid = $1::integer;
           `,
-      surveyToUpdate.getId
+      surveyToUpdate.id
     )
   }
 
   /**
    * Saves an survey response to the database.
    * @function
-   * @param {Survey} surveyResponseToSave - SurveyResponse to save.
+   * @param {SurveyResponse} surveyResponseToSave - SurveyResponse to save.
    * @returns {boolean} - returns if it was saved or  not.
    * */
   static async _saveNewSurveyResponse (surveyResponseToSave) {
@@ -170,7 +170,7 @@ module.exports = class SurveyResponseDAO {
       const insertResult = await Database.executeSQLStatement(
         'INSERT INTO answerlist(filledbyuser) ' +
         'VALUES($1) RETURNING answerlistid',
-        surveyResponseToSave.getFilledByUser.getId
+        surveyResponseToSave.filledByUser.id
       )
 
       // add newly set Id to model for the answers of the survey

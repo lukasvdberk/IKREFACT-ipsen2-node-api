@@ -7,6 +7,7 @@ module.exports = class SurveyResponseUtil {
     const user = req.user
     const answersReq = req.body.answers
     const answers = []
+
     for (let i = 0; i < answersReq.length; i++) {
       const answer = answersReq[i]
       const answerModel = new SurveyAnswer(new SurveyQuestion(answer.question.id, undefined, undefined), answer.textAnswer, undefined)

@@ -8,6 +8,7 @@ module.exports = class SurveyController {
   static async getSurveys (req, res) {
     try {
       const listOfSurveys = await SurveyDAO.getAllSurveys()
+
       return ApiResponse.sendSuccessApiResponse(listOfSurveys, res)
     } catch (ignored) {
       return ApiResponse.sendErrorApiResponse(500, 'Failed to retrieve questions', res)
@@ -23,6 +24,7 @@ module.exports = class SurveyController {
     try {
       const surveyIdToSearch = req.params.questionListId
       const surveyToReturn = await SurveyDAO.getSurveyById(surveyIdToSearch)
+
       return ApiResponse.sendSuccessApiResponse(surveyToReturn, res)
     } catch (ignored) {
       return ApiResponse.sendErrorApiResponse(500, 'Failed to retrieve questions', res)
@@ -36,6 +38,7 @@ module.exports = class SurveyController {
     if (errorMessage === undefined) {
       try {
         const isSurveySaved = await SurveyDAO.saveSurvey(surveyToSave)
+
         if (isSurveySaved) {
           return ApiResponse.sendSuccessApiResponse({ saved: true }, res)
         } else {
@@ -57,11 +60,13 @@ module.exports = class SurveyController {
       return ApiResponse.sendErrorApiResponse(400, errorMessage, res)
     } else {
       const existingSurvey = await SurveyDAO.getSurveyById(surveyToUpdate.id)
+
       if (existingSurvey === undefined) {
         return ApiResponse.sendErrorApiResponse(404, 'Question list not found', res)
       } else {
         try {
           const isSurveyUpdated = await SurveyDAO.updateSurvey(surveyToUpdate.id, surveyToUpdate)
+
           if (isSurveyUpdated) {
             return ApiResponse.sendSuccessApiResponse({ saved: true }, res)
           } else {

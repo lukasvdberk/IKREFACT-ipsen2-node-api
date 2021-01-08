@@ -28,10 +28,12 @@ module.exports = class UserController {
         return ApiResponse.sendErrorApiResponse(400, 'You did not supply a username', res)
       }
       const user = await UserDAO.getUserByUsername(username)
+
       if (user === undefined) {
         return ApiResponse.sendErrorApiResponse(400, 'User not found', res)
       } else {
         const userIsUpdated = await UserDAO.makeUserAdmin(user.getId)
+
         if (userIsUpdated) {
           return ApiResponse.sendSuccessApiResponse({}, res)
         }
@@ -50,10 +52,12 @@ module.exports = class UserController {
     try {
       const username = req.body.username
       const user = UserDAO.getUserByUsername(username)
+
       if (user === undefined) {
         return ApiResponse.sendErrorApiResponse(400, 'User not found', res)
       } else {
-        const userIsUpdated = await UserDAO.makeAdminUser(user.getId)
+        const userIsUpdated = await UserDAO.makeAdminUser(user.id)
+
         if (userIsUpdated) {
           return ApiResponse.sendSuccessApiResponse({}, res)
         }

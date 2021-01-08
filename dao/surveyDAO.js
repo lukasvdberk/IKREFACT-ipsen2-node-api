@@ -80,6 +80,7 @@ module.exports = class SurveyDAO {
         row.isactive
       )
     }
+
     return undefined
   }
 
@@ -109,18 +110,19 @@ module.exports = class SurveyDAO {
     const saveQueryResult = await Database.executeSQLStatement(
       'INSERT INTO questionlist(title, madebyadmin, isActive, createdon) ' +
       'VALUES($1,(SELECT adminuserid FROM adminuser WHERE userid=$2 LIMIT 1),$3, current_timestamp) RETURNING questionlistid',
-      surveyToSave.getTitle, surveyToSave.getMadeBy.getId, surveyToSave.getIsActive
+      surveyToSave.title, surveyToSave.madeBy.id, surveyToSave.isActive
     )
 
     if (saveQueryResult.rowCount > 0) {
       const surveyId = saveQueryResult.rows[0].questionlistid
 
-      for (const question of surveyToSave.getQuestions) {
+      for (const question of surveyToSave.questions) {
         await Database.executeSQLStatement(
           'INSERT INTO question(questionidlistid,question, questiontype) VALUES($1,$2,$3)',
-          surveyId, question.getDescription, question.getType
+          surveyId, question.description, question.type
         )
       }
+
       return true
     } else {
       return false

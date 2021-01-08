@@ -9,11 +9,13 @@ module.exports = class AuthorizationController {
     const userFromRequestBody = UserUtil.requestBodyToUserModel(req)
 
     const userFromDatabase = await UserDAO.getUserByUsername(userFromRequestBody.username)
+
     if (userFromDatabase !== undefined) {
       const validPassword = await AuthorizationUtil.validPassword(userFromRequestBody.password, userFromDatabase.hashPassword)
+
       if (validPassword) {
         const isUserAdmin = await UserDAO.isUserAdmin(new User(userFromDatabase.getId, userFromDatabase.getUsername))
-        const token = AuthorizationUtil.createJWT(userFromDatabase.getId, userFromRequestBody.getUsername, isUserAdmin)
+        const token = AuthorizationUtil.createJWT(userFromDatabase.getId, userFromRequestBody.username, isUserAdmin)
 
         return ApiResponse.sendSuccessApiResponse({
           key: token,
@@ -35,18 +37,19 @@ module.exports = class AuthorizationController {
     }
 
     const hashedPassword = await AuthorizationUtil.hashPassword(user.password)
-    const userObj = UserDAO.getUserByUsername(user.username)
-    if (userObj === undefined) {
-      UserDAO.saveUser(user, hashedPassword).then((success) => {
-        if (success) {
-          UserDAO.getUserByUsername(user.username).then((user) => {
-            return ApiResponse.sendSuccessApiResponse({
-              key: AuthorizationUtil.createJWT(user.getId, user.getUsername, false),
-              isAdmin: false
-            }, res)
-          })
-        }
-      })
+    const existingUser = UserDAO.getUserByUsername(user.username)
+
+    if (existingUser === undefined) {
+      const isSaved = await UserDAO.saveUser(user, hashedPassword)
+
+      if (isSaved) {
+        UserDAO.getUserByUsername(user.username).then((user) => {
+          return ApiResponse.sendSuccessApiResponse({
+            key: AuthorizationUtil.createJWT(user.id, user.username, false),
+            isAdmin: false
+          }, res)
+        })
+      }
     } else {
       return ApiResponse.sendErrorApiResponse(303, 'User with the given username already exists', res)
     }
