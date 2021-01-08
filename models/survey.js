@@ -17,31 +17,4 @@ module.exports = class Survey {
     this.questions = questions
     this.isActive = isActive
   }
-
-  get getId () {
-    return this.id
-  }
-
-  get getTitle () {
-    return this.title
-  }
-
-  get getMadeBy () {
-    return this.madeBy
-  }
-
-  get getCreatedOn () {
-    return this.createdOn
-  }
-
-  /**
-   * @returns {Question[]} questions - Array of question models that belong to this question list
-   */
-  get getQuestions () {
-    return this.questions
-  }
-
-  get getIsActive () {
-    return this.isActive
-  }
 }

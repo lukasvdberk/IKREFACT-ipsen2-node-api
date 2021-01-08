@@ -11,16 +11,4 @@ module.exports = class SurveyQuestion {
     this.description = description
     this.type = type
   }
-
-  get getId () {
-    return this.id
-  }
-
-  get getDescription () {
-    return this.description
-  }
-
-  get getType () {
-    return this.type
-  }
 }

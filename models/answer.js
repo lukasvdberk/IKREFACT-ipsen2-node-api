@@ -11,20 +11,4 @@ module.exports = class SurveyAnswer {
     this.textAnswer = textAnswer
     this.fileArray = fileArray
   }
-
-  /**
-   * @get
-   * @return {Question} question - The question model which this object answers
-   */
-  get getQuestion () {
-    return this.question
-  }
-
-  get getTextAnswer () {
-    return this.textAnswer
-  }
-
-  get getFileArray () {
-    return this.fileArray
-  }
 }

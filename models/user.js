@@ -9,20 +9,4 @@ module.exports = class User {
     this.id = id
     this.username = username
   }
-
-  get getId () {
-    return this.id
-  }
-
-  get getUsername () {
-    return this.username
-  }
-
-  set hashedPassword (password) {
-    this._hashedPassword = password
-  }
-
-  get hashedPassword () {
-    return this._hashedPassword
-  }
 }
