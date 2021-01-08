@@ -5,7 +5,7 @@ const ApiResponse = require('./utils/apiResponse')
 const UserUtil = require('./utils/userUtil')
 
 module.exports = class AuthorizationController {
-  static async login (req, res, next) {
+  static async login (req, res) {
     const userFromRequestBody = UserUtil.requestBodyToUserModel(req)
 
     const userFromDatabase = await UserDAO.getUserByUsername(userFromRequestBody.username)
@@ -27,7 +27,7 @@ module.exports = class AuthorizationController {
     }
   }
 
-  static async register (req, res, next) {
+  static async register (req, res) {
     const user = UserUtil.requestBodyToUserModel(req)
 
     if (!user) {

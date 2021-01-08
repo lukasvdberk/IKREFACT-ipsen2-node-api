@@ -5,7 +5,7 @@ const SurveyChecker = require('./validators/surveyValidator')
 const SurveyUtil = require('./utils/surveyUtil')
 
 module.exports = class SurveyController {
-  static async getSurveys (req, res, next) {
+  static async getSurveys (req, res) {
     try {
       const listOfSurveys = await SurveyDAO.getAllSurveys()
       return ApiResponse.sendSuccessApiResponse(listOfSurveys, res)
@@ -29,7 +29,7 @@ module.exports = class SurveyController {
     }
   }
 
-  static async saveSurvey (req, res, next) {
+  static async saveSurvey (req, res) {
     const surveyToSave = SurveyUtil.requestBodyToSurveyModel(req)
     const errorMessage = SurveyChecker.isValidSurvey(surveyToSave)
 
@@ -49,7 +49,7 @@ module.exports = class SurveyController {
     }
   }
 
-  static async editSurvey (req, res, next) {
+  static async editSurvey (req, res) {
     const surveyToUpdate = SurveyUtil.requestBodyToSurveyModel(req)
     const errorMessage = SurveyChecker.isValidSurvey(surveyToUpdate)
 

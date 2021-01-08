@@ -7,7 +7,7 @@ module.exports = class UserController {
    * @function
    * @returns {json} - response
    */
-  static async allUsers (req, res, next) {
+  static async allUsers (req, res) {
     try {
       const users = await UserDAO.getUsers()
       return ApiResponse.sendSuccessApiResponse(users, res)
@@ -21,7 +21,7 @@ module.exports = class UserController {
    * @function
    * @returns {json} - Returns a response in json format.
    */
-  static async changeUserToAdmin (req, res, next) {
+  static async changeUserToAdmin (req, res) {
     try {
       const username = req.body.username
       if (!username) {

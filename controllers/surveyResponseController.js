@@ -1,7 +1,4 @@
 const SurveyResponseDAO = require('../dao/surveyResponseDAO')
-const SurveyAnswer = require('../models/answer')
-const SurveyResponse = require('../models/surveyResponse')
-const SurveyQuestion = require('../models/surveyQuestion')
 const ApiResponse = require('./utils/apiResponse')
 const SurveyResponseUtil = require('./utils/surveyResponseUtil')
 
@@ -12,7 +9,7 @@ module.exports = class SurveyResponseController {
    * @returns {json} response
    * @
    */
-  static async surveyResponsesFromUser (req, res, next) {
+  static async surveyResponsesFromUser (req, res) {
     try {
       const userToRetrieveFilledSurveysFrom = req.user
       const listOfSurvey = await SurveyResponseDAO.getFinishedSurveyResponsesByUserId(userToRetrieveFilledSurveysFrom.getId)
@@ -22,7 +19,7 @@ module.exports = class SurveyResponseController {
     }
   }
 
-  static async getSurveyResponseById (req, res, next) {
+  static async getSurveyResponseById (req, res) {
     try {
       const surveyIdToRetrieveById = req.params.questionListId
       const user = req.user
@@ -38,7 +35,7 @@ module.exports = class SurveyResponseController {
    * @function
    * @returns {json} - Returns a response.
    */
-  static async saveSurveyResponse (req, res, next) {
+  static async saveSurveyResponse (req, res) {
     const surveyResponseToSave = SurveyResponseUtil.requestBodyToSurveyModel(req)
 
     if (surveyResponseToSave.answers.length > 0) {
@@ -69,7 +66,7 @@ module.exports = class SurveyResponseController {
     }
   }
 
-  static async editSurveyResponseAndMarkAsDone (req, res, next) {
+  static async editSurveyResponseAndMarkAsDone (req, res) {
     const surveyResponseToUpdate = SurveyResponseUtil.requestBodyToSurveyModel(req)
 
     if (surveyResponseToUpdate.answers.length > 0) {
