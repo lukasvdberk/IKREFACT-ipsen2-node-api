@@ -1,6 +1,8 @@
 const SurveyResponseDAO = require('../dao/surveyResponseDAO')
 const ApiResponse = require('./utils/apiResponse')
-const SurveyResponseUtil = require('./utils/surveyResponseUtil')
+const SurveyAnswer = require('../models/answer')
+const SurveyResponse = require('../models/surveyResponse')
+const SurveyQuestion = require('../models/surveyQuestion')
 
 module.exports = class SurveyResponseController {
   /**
@@ -38,7 +40,7 @@ module.exports = class SurveyResponseController {
    * @returns {json} - Returns a response.
    */
   static async saveSurveyResponse (req, res) {
-    const surveyResponseToSave = SurveyResponseUtil.requestBodyToSurveyModel(req)
+    const surveyResponseToSave = SurveyResponseController._requestBodyToSurveyModel(req)
 
     if (surveyResponseToSave.answers.length > 0) {
       try {
@@ -70,7 +72,7 @@ module.exports = class SurveyResponseController {
   }
 
   static async editSurveyResponseAndMarkAsDone (req, res) {
-    const surveyResponseToUpdate = SurveyResponseUtil.requestBodyToSurveyModel(req)
+    const surveyResponseToUpdate = SurveyResponseController._requestBodyToSurveyModel(req)
 
     if (surveyResponseToUpdate.answers.length > 0) {
       try {
@@ -98,6 +100,22 @@ module.exports = class SurveyResponseController {
         errorMessage: 'You did not supply any answers.'
       })
     }
+  }
+
+  static _requestBodyToSurveyModel (req) {
+    const user = req.user
+    const answersReq = req.body.answers
+    const answers = []
+
+    for (let i = 0; i < answersReq.length; i++) {
+      const answer = answersReq[i]
+      const answerModel = new SurveyAnswer(new SurveyQuestion(answer.question.id, undefined, undefined), answer.textAnswer, undefined)
+      answers.push(answerModel)
+    }
+
+    const existingSurveyId = req.id
+
+    return new SurveyResponse(existingSurveyId, user, undefined, answers)
   }
 
   static addFileToAnswer (req, res, next) {

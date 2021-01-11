@@ -2,11 +2,10 @@ const AuthorizationUtil = require('../util/auhtorizationUtil')
 const UserDAO = require('../dao/userDAO')
 const User = require('../models/user')
 const ApiResponse = require('./utils/apiResponse')
-const UserUtil = require('./utils/userUtil')
 
 module.exports = class AuthorizationController {
   static async login (req, res) {
-    const userFromRequestBody = UserUtil.requestBodyToUserModel(req)
+    const userFromRequestBody = AuthorizationController._requestBodyToUserModel(req)
 
     const userFromDatabase = await UserDAO.getUserByUsername(userFromRequestBody.username)
 
@@ -30,7 +29,7 @@ module.exports = class AuthorizationController {
   }
 
   static async register (req, res) {
-    const user = UserUtil.requestBodyToUserModel(req)
+    const user = AuthorizationController._requestBodyToUserModel(req)
 
     if (!user) {
       return ApiResponse.sendErrorApiResponse(400, 'Username or password not supplied', res)
@@ -53,5 +52,18 @@ module.exports = class AuthorizationController {
     } else {
       return ApiResponse.sendErrorApiResponse(303, 'User with the given username already exists', res)
     }
+  }
+
+  static _requestBodyToUserModel (req) {
+    const id = req.body.id
+    const username = req.body.username
+    const password = req.body.password
+
+    if (!username || !password) {
+      return undefined
+    }
+    const user = new User(id, username)
+    user.password = password
+    return user
   }
 }

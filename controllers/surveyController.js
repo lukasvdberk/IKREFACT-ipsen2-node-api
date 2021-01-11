@@ -1,8 +1,8 @@
-
 const SurveyDAO = require('../dao/surveyDAO')
 const ApiResponse = require('./utils/apiResponse')
-const SurveyChecker = require('./validators/surveyValidator')
-const SurveyUtil = require('./utils/surveyUtil')
+const Survey = require('../models/survey')
+const SurveyQuestion = require('../models/surveyQuestion')
+const QuestionTypes = require('../models/questionTypeEnum')
 
 module.exports = class SurveyController {
   static async getSurveys (req, res) {
@@ -32,8 +32,8 @@ module.exports = class SurveyController {
   }
 
   static async saveSurvey (req, res) {
-    const surveyToSave = SurveyUtil.requestBodyToSurveyModel(req)
-    const errorMessage = SurveyChecker.isValidSurvey(surveyToSave)
+    const surveyToSave = SurveyController._requestBodyToSurveyModel(req)
+    const errorMessage = SurveyController._isValidSurvey(surveyToSave)
 
     if (errorMessage === undefined) {
       try {
@@ -53,8 +53,8 @@ module.exports = class SurveyController {
   }
 
   static async editSurvey (req, res) {
-    const surveyToUpdate = SurveyUtil.requestBodyToSurveyModel(req)
-    const errorMessage = SurveyChecker.isValidSurvey(surveyToUpdate)
+    const surveyToUpdate = SurveyController._requestBodyToSurveyModel(req)
+    const errorMessage = SurveyController._isValidSurvey(surveyToUpdate)
 
     if (errorMessage) {
       return ApiResponse.sendErrorApiResponse(400, errorMessage, res)
@@ -77,5 +77,38 @@ module.exports = class SurveyController {
         }
       }
     }
+  }
+
+  /**
+   * Checks if questions are filled in correctly.
+   * @param {Survey} surveyModel - A valid express response object to send the response with.
+   */
+  static _isValidSurvey (surveyModel) {
+    if (surveyModel.questions.length > 0 || surveyModel.title) {
+      for (let i = 0; i < surveyModel.questions.length; i++) {
+        const question = surveyModel.questions[i]
+        if (![QuestionTypes.TEXT_QUESTION, QuestionTypes.FILE_QUESTION].includes(question.type)) {
+          return 'There is an invalid question type'
+        }
+      }
+    } else {
+      return 'You did not supply any questions'
+    }
+  }
+
+  static _requestBodyToSurveyModel (req) {
+    const id = req.body.id
+    const admin = req.user
+    const title = req.body.title
+    const questionsReq = req.body.questions
+
+    const questions = []
+
+    for (let i = 0; i < questionsReq.length; i++) {
+      const question = questionsReq[i]
+      const questionModel = new SurveyQuestion(question.id, question.description, question.type)
+      questions.push(questionModel)
+    }
+    return new Survey(id, title, admin, undefined, questions, true)
   }
 }
