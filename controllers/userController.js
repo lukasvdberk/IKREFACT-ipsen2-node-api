@@ -1,5 +1,6 @@
 const UserDAO = require('../dao/userDAO')
 const ApiResponse = require('./utils/apiResponse')
+const UserCouldNotBeFound = require('../dao/exceptions/userCouldNotBeFound')
 
 module.exports = class UserController {
   /**
@@ -24,22 +25,17 @@ module.exports = class UserController {
   static async changeUserToAdmin (req, res) {
     try {
       const username = req.body.username
-      if (!username) {
-        return ApiResponse.sendErrorApiResponse(400, 'You did not supply a username', res)
-      }
       const user = await UserDAO.getUserByUsername(username)
 
-      if (user === undefined) {
+      await UserDAO.upgradeUserToAdminRole(user.id)
+
+      return ApiResponse.sendSuccessApiResponse({}, res)
+    } catch (exception) {
+      if (exception instanceof UserCouldNotBeFound) {
         return ApiResponse.sendErrorApiResponse(400, 'User not found', res)
       } else {
-        const userIsUpdated = await UserDAO.makeUserAdmin(user.getId)
-
-        if (userIsUpdated) {
-          return ApiResponse.sendSuccessApiResponse({}, res)
-        }
+        return ApiResponse.sendErrorApiResponse(500, 'Failed to make user admin', res)
       }
-    } catch (ignored) {
-      return ApiResponse.sendErrorApiResponse(500, 'Failed to make user admin', res)
     }
   }
 
@@ -48,22 +44,20 @@ module.exports = class UserController {
    * @function
    * @returns {json} - Returns a response in json format.
    */
-  static async changeAdminToUser (req, res, next) {
+  static async changeAdminToUser (req, res) {
     try {
       const username = req.body.username
-      const user = UserDAO.getUserByUsername(username)
+      const user = await UserDAO.getUserByUsername(username)
 
-      if (user === undefined) {
+      await UserDAO.downgradeAdminToUserRole(user.id)
+
+      return ApiResponse.sendSuccessApiResponse({}, res)
+    } catch (exception) {
+      if (exception instanceof UserCouldNotBeFound) {
         return ApiResponse.sendErrorApiResponse(400, 'User not found', res)
       } else {
-        const userIsUpdated = await UserDAO.makeAdminUser(user.id)
-
-        if (userIsUpdated) {
-          return ApiResponse.sendSuccessApiResponse({}, res)
-        }
+        return ApiResponse.sendErrorApiResponse(500, 'Failed to make admin to user', res)
       }
-    } catch (ignored) {
-      return ApiResponse.sendErrorApiResponse(500, 'Failed to make admin to user', res)
     }
   }
 }

@@ -1,5 +1,7 @@
 const Database = require('./database')
 const User = require('../models/user')
+const UserCouldNotBeFound = require('./exceptions/userCouldNotBeFound')
+const UserCouldNotBeSaved = require('./exceptions/userCouldNotBeSaved')
 
 module.exports = class UserDAO {
   /**
@@ -15,14 +17,16 @@ module.exports = class UserDAO {
       user.username, hashedPassword
     )
 
-    return queryResult.rowCount === 1
+    if (queryResult.rowCount !== 1) {
+      throw new UserCouldNotBeSaved('Failed to save the user.')
+    }
   }
 
   /**
   * Checks if user with given username already exists in the database
   * @function
   * @param {string} username - The username you want to check
-  * @returns {User} - If found returns user object or else undefined
+  * @returns {User} - If found returns user object or else throws an exceptions of UserCouldNotBeFound
   */
   static async getUserByUsername (username) {
     const userQueryResult = await Database.executeSQLStatement(
@@ -35,9 +39,9 @@ module.exports = class UserDAO {
       user.hashPassword = row.password
 
       return user
+    } else {
+      throw new UserCouldNotBeFound('User could not be found by username')
     }
-
-    return undefined
   }
 
   /**
@@ -45,7 +49,7 @@ module.exports = class UserDAO {
   * @function
   * @param {string} userId - Id of the user you want to make admin
   */
-  static async makeUserAdmin (userId) {
+  static async upgradeUserToAdminRole (userId) {
     const queryResult = await Database.executeSQLStatement(
       'INSERT INTO "adminuser"(userid) VALUES($1)', userId
     )
@@ -58,7 +62,7 @@ module.exports = class UserDAO {
   * @function
   * @param {string} userId - Id of the user you want to make admin
   */
-  static async makeAdminUser (userId) {
+  static async downgradeAdminToUserRole (userId) {
     const queryResult = await Database.executeSQLStatement(
       'Delete FROM adminuser WHERE adminuser.userid = $1', userId
     )
@@ -74,7 +78,7 @@ module.exports = class UserDAO {
   */
   static async isUserAdmin (user) {
     const queryResult = await Database.executeSQLStatement(
-      'SELECT * FROM adminuser WHERE userid=$1', user.getId
+      'SELECT * FROM adminuser WHERE userid=$1', user.id
     )
 
     return queryResult.rowCount > 0

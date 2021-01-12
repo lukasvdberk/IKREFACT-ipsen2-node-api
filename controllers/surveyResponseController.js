@@ -1,5 +1,8 @@
 const SurveyResponseDAO = require('../dao/surveyResponseDAO')
 const ApiResponse = require('./utils/apiResponse')
+const SurveyResponseCouldNotBeSaved = require('../dao/exceptions/surveyCouldNotBeSaved')
+const SurveyResponseCouldNotBeUpdated = require('../dao/exceptions/surveyResponseCouldNotBeUpdated')
+const SurveyValidNotValid = require('./exceptions/surveyResponseNotValid')
 const SurveyAnswer = require('../models/answer')
 const SurveyResponse = require('../models/surveyResponse')
 const SurveyQuestion = require('../models/surveyQuestion')
@@ -40,75 +43,57 @@ module.exports = class SurveyResponseController {
    * @returns {json} - Returns a response.
    */
   static async saveSurveyResponse (req, res) {
-    const surveyResponseToSave = SurveyResponseController._requestBodyToSurveyModel(req)
+    try {
+      const surveyResponseToSave = SurveyResponseController._requestBodyToSurveyResponseModel(req)
 
-    if (surveyResponseToSave.answers.length > 0) {
-      try {
-        const isSaved = await SurveyResponseDAO.saveSurveyResponse(surveyResponseToSave, false)
+      // can throw SurveyValidNotValid if it is invalid
+      SurveyResponseController._checkIsValidSurveyResponse(surveyResponseToSave)
 
-        if (isSaved) {
-          return res.json({
-            success: true,
-            saved: true
-          })
-        } else {
-          return res.status(500).json({
-            success: false,
-            errorMessage: 'Could not save data'
-          })
-        }
-      } catch (ignored) {
-        return res.json({
-          success: false,
-          errorMessage: 'Could not save answerlist'
-        })
+      await SurveyResponseDAO.saveSurveyResponse(surveyResponseToSave, false)
+
+      return ApiResponse.sendSuccessApiResponse({ saved: true }, res)
+    } catch (exception) {
+      if (exception instanceof SurveyResponseCouldNotBeSaved) {
+        return ApiResponse.sendErrorApiResponse(500, 'Could not save data', res)
       }
-    } else {
-      return res.status(400).json({
-        success: false,
-        errorMessage: 'You did not supply any answers.'
-      })
+      if (exception instanceof SurveyValidNotValid) {
+        return ApiResponse.sendErrorApiResponse(400, 'You did not supply any answers.', res)
+      } else {
+        return ApiResponse.sendErrorApiResponse(500, 'Could not save answerlist', res)
+      }
     }
   }
 
   static async editSurveyResponseAndMarkAsDone (req, res) {
-    const surveyResponseToUpdate = SurveyResponseController._requestBodyToSurveyModel(req)
+    try {
+      const surveyResponseToUpdate = SurveyResponseController._requestBodyToSurveyResponseModel(req)
 
-    if (surveyResponseToUpdate.answers.length > 0) {
-      try {
-        const isUpdated = await SurveyResponseDAO.updateSurveyResponse(surveyResponseToUpdate, true)
-        if (isUpdated) {
-          return res.json({
-            success: true,
-            saved: true
-          })
-        } else {
-          return res.status(500).json({
-            success: false,
-            errorMessage: 'Could not save data'
-          })
-        }
-      } catch (ignored) {
-        return res.json({
-          success: false,
-          errorMessage: 'Could not save answerlist'
-        })
+      // can throw SurveyValidNotValid if it is invalid
+      SurveyResponseController._checkIsValidSurveyResponse(surveyResponseToUpdate)
+
+      await SurveyResponseDAO.updateSurveyResponse(surveyResponseToUpdate, true)
+
+      return ApiResponse.sendSuccessApiResponse({ saved: true }, res)
+    } catch (exception) {
+      if (exception instanceof SurveyResponseCouldNotBeUpdated) {
+        return ApiResponse.sendErrorApiResponse(500, 'Could not save data', res)
       }
-    } else {
-      return res.status(400).json({
-        success: false,
-        errorMessage: 'You did not supply any answers.'
-      })
+      if (exception instanceof SurveyValidNotValid) {
+        return ApiResponse.sendErrorApiResponse(400, 'You did not supply any answers.', res)
+      } else {
+        return ApiResponse.sendErrorApiResponse(500, 'Could not save answerlist', res)
+      }
     }
   }
 
-  static _requestBodyToSurveyModel (req) {
+  static _requestBodyToSurveyResponseModel (req) {
     const user = req.user
     const answersReq = req.body.answers
     const answers = []
 
     for (let i = 0; i < answersReq.length; i++) {
       const answer = answersReq[i]
+      // undefined since we only get the id for a question
       const answerModel = new SurveyAnswer(new SurveyQuestion(answer.question.id, undefined, undefined), answer.textAnswer, undefined)
       answers.push(answerModel)
     }
@@ -118,7 +103,10 @@ module.exports = class SurveyResponseController {
     return new SurveyResponse(existingSurveyId, user, undefined, answers)
   }
 
-  static addFileToAnswer (req, res, next) {
-
+  static _checkIsValidSurveyResponse (surveyResponseToCheck) {
+    const isValid = surveyResponseToCheck.answers.length > 0
+    if (!isValid) {
+      throw new SurveyValidNotValid('Survey has invalid data')
+    }
   }
 }

@@ -24,7 +24,7 @@ module.exports = class AuthorizationUtil {
    * @param {string} hash - The hash you want to compare to the password (likely coming from a database)
    * @returns {boolean} Success or not
    */
-  static async validPassword (password, hash) {
+  static async comparePasswordHashAgainstPlainPassword (password, hash) {
     return bcrypt.compare(password, hash)
   }
 

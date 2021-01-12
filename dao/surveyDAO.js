@@ -2,6 +2,8 @@ const Survey = require('../models/survey')
 const Admin = require('../models/admin')
 const SurveyQuestion = require('../models/surveyQuestion')
 const Database = require('./database')
+const SurveyNotFoundException = require('./exceptions/surveyNotFoundException')
+const SurveyCouldNotBeSaved = require('./exceptions/surveyCouldNotBeSaved')
 
 module.exports = class SurveyDAO {
   /**
@@ -65,9 +67,9 @@ module.exports = class SurveyDAO {
       })
 
       return SurveyDAO._surveyDatabaseRowToModel(row, adminUser, questions)
+    } else {
+      throw new SurveyNotFoundException('Exception with the given id does not exist')
     }
-
-    return undefined
   }
 
   /**
@@ -108,10 +110,8 @@ module.exports = class SurveyDAO {
           surveyId, question.description, question.type
         )
       }
-
-      return true
     } else {
-      return false
+      throw new SurveyCouldNotBeSaved('Survey could not be saved due to invalid errors')
     }
   }
 

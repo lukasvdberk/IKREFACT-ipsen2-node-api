@@ -3,6 +3,9 @@ const Answer = require('../models/answer')
 const SurveyQuestion = require('../models/surveyQuestion')
 const SurveyResponse = require('../models/surveyResponse')
 const SurveyDAO = require('./surveyDAO')
+const SurveyResponseCouldNotBeSaved = require('./exceptions/surveyResponseCouldNotBeSaved')
+const SurveyResponseCouldNotBeUpdated = require('./exceptions/surveyResponseCouldNotBeUpdated')
+const SurveyResponseNotFoundException = require('./exceptions/surveyResponseCouldNotBeFound')
 
 module.exports = class SurveyResponseDAO {
   /**
@@ -76,9 +79,9 @@ module.exports = class SurveyResponseDAO {
       })
 
       return SurveyResponseDAO._surveyResponseDatabaseRowToModel(row, user, answers)
+    } else {
+      throw new SurveyResponseNotFoundException('Survey response could not be found by its survey id')
     }
-
-    return undefined
   }
 
   /**
@@ -86,7 +89,6 @@ module.exports = class SurveyResponseDAO {
    * @function
    * @param {SurveyResponse} surveyResponseToSave - SurveyResponse to save.
    * @param {boolean} markSurveyAsDone - Whether the saved SurveyResponse is the final version or not.
-   * @returns {boolean} - returns if it was saved or  not.
    */
   static async saveSurveyResponse (surveyResponseToSave, markSurveyAsDone) {
     try {
@@ -95,10 +97,8 @@ module.exports = class SurveyResponseDAO {
       if (markSurveyAsDone && isSurveySaved) {
         await SurveyResponseDAO._markSurveyResponseAsDone(surveyResponseToSave)
       }
-
-      return isSurveySaved
     } catch (ignored) {
-      return false
+      throw new SurveyResponseCouldNotBeSaved('Survey response could not be saved due to invalid data.')
     }
   }
 
@@ -108,9 +108,8 @@ module.exports = class SurveyResponseDAO {
         await SurveyResponseDAO._markSurveyResponseAsDone(surveyToUpdate)
       }
       await SurveyResponseDAO._updateAnswersOfSurveyResponse(surveyToUpdate)
-      return true
     } catch (ignored) {
-      return false
+      throw new SurveyResponseCouldNotBeUpdated('Could not update survey response since invalid data was given')
     }
   }
 
@@ -120,7 +119,6 @@ module.exports = class SurveyResponseDAO {
    * @param surveyResponseDatabaseRow - Is of type database row.
    * @param {User} user - User who filled in the survey.
    * @param {Answer[]} answers - Questions that belong to the survey.
-   * @returns {SurveyResponse} - Survey response object.
    */
   static _surveyResponseDatabaseRowToModel (surveyResponseDatabaseRow, user = undefined, answers = undefined) {
     return new SurveyResponse(
@@ -184,7 +182,6 @@ module.exports = class SurveyResponseDAO {
    * Saves an survey response to the database.
    * @function
    * @param {SurveyResponse} surveyResponseToSave - SurveyResponse to save.
-   * @returns {boolean} - returns if it was saved or  not.
    * */
   static async _saveNewSurveyResponse (surveyResponseToSave) {
     try {
@@ -197,9 +194,8 @@ module.exports = class SurveyResponseDAO {
       // add newly set Id to model for the answers of the survey
       surveyResponseToSave.id = insertResult.rows[0].answerlistid
       await SurveyResponseDAO._saveAnswersOfSurveyResponse(surveyResponseToSave)
-      return true
     } catch (ignored) {
-      return false
+      throw new SurveyResponseCouldNotBeSaved('Survey response could not be saved due to invalid data.')
     }
   }
 }
