@@ -18,10 +18,6 @@ module.exports = class UserDAO {
     return queryResult.rowCount === 1
   }
 
-  static async updateUser (existingUserId, updatedUser) {
-
-  }
-
   /**
   * Checks if user with given username already exists in the database
   * @function

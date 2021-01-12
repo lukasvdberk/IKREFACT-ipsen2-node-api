@@ -1,8 +1,8 @@
 const Database = require('./database')
-const Survey = require('../models/survey')
 const Answer = require('../models/answer')
 const SurveyQuestion = require('../models/surveyQuestion')
 const SurveyResponse = require('../models/surveyResponse')
+const SurveyDAO = require('./surveyDAO')
 
 module.exports = class SurveyResponseDAO {
   /**
@@ -26,16 +26,10 @@ module.exports = class SurveyResponseDAO {
     )
 
     const listOfSurveys = []
-    // TODO set madeby correctly
+
     surveyListQueryResult.rows.forEach((row) => {
-      listOfSurveys.push(new Survey(
-        row.questionlistid,
-        row.title,
-        undefined,
-        row.createdon,
-        undefined,
-        row.isactive
-      ))
+      // TODO refactor to its own class or something like that
+      listOfSurveys.push(SurveyDAO._surveyDatabaseRowToModel(row))
     })
 
     return listOfSurveys
@@ -45,6 +39,7 @@ module.exports = class SurveyResponseDAO {
    * Gets the list of survey already filled by user.
    * @function
    * @param {User} user - Should be a user model.
+   * @param {Number} surveyId - Id of the Survey to fetch SurveyResponse from by user.
    * @returns {boolean} - returns if it was saved or  not.
    */
   static async getExistingSurveyResponseFromUser (user, surveyId) {
@@ -60,7 +55,6 @@ module.exports = class SurveyResponseDAO {
       user.id, surveyId
     )
 
-    // TODO set madeby correctly
     if (existingSurveyResponseQueryResult.rowCount > 0) {
       const row = existingSurveyResponseQueryResult.rows[0]
       const answersFromSurveyResponseQueryResult = await Database.executeSQLStatement(
@@ -77,16 +71,11 @@ module.exports = class SurveyResponseDAO {
       answersFromSurveyResponseQueryResult.rows.forEach((answer) => {
         const question = new SurveyQuestion(answer.questionid, answer.question, answer.questiontype)
 
-        // TODO add file support
-        answers.push(new Answer(question, answer.answer, []))
+        // files array is empty since it is not implemented
+        answers.push(SurveyResponseDAO._answerOfSurveyResponseFromDatabaseRowToModel(answer, question, []))
       })
 
-      return new SurveyResponse(
-        row.answerlistid,
-        user,
-        row.finishedon,
-        answers
-      )
+      return SurveyResponseDAO._surveyResponseDatabaseRowToModel(row, user, answers)
     }
 
     return undefined
@@ -125,7 +114,39 @@ module.exports = class SurveyResponseDAO {
     }
   }
 
-  // TODO add better naming for functions below
+  /**
+   * Parses a database row to a survey model.
+   * @function
+   * @param surveyResponseDatabaseRow - Is of type database row.
+   * @param {User} user - User who filled in the survey.
+   * @param {Answer[]} answers - Questions that belong to the survey.
+   * @returns {SurveyResponse} - Survey response object.
+   */
+  static _surveyResponseDatabaseRowToModel (surveyResponseDatabaseRow, user = undefined, answers = undefined) {
+    return new SurveyResponse(
+      surveyResponseDatabaseRow.answerlistid,
+      user,
+      surveyResponseDatabaseRow.finishedon,
+      answers
+    )
+  }
+
+  /**
+   * Parses a database row to a survey model.
+   * @function
+   * @param answerToSurveyDatabaseRow - Is of type database row.
+   * @param {SurveyQuestion} questionOfAnswerAsModel - Question that is getting answered as model.
+   * @param {[]} files - Files belonging to the survey
+   * @returns {SurveyResponse} - Survey response object.
+   */
+  static _answerOfSurveyResponseFromDatabaseRowToModel (answerToSurveyDatabaseRow, questionOfAnswerAsModel, files) {
+    return new Answer(
+      questionOfAnswerAsModel,
+      answerToSurveyDatabaseRow.answer,
+      files
+    )
+  }
+
   static async _updateAnswersOfSurveyResponse (surveyResponseWithAnswers) {
     for (const answer of surveyResponseWithAnswers.answers) {
       await Database.executeSQLStatement(

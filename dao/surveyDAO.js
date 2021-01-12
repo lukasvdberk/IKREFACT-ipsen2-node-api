@@ -10,7 +10,7 @@ module.exports = class SurveyDAO {
    * @function
    * @returns {SurveyQuestion[]} - Array of Surveys without questions
    */
-  static async getAllSurveys () {
+  static async getAllSurveysMetaData () {
     const activeSurveysQueryResult = await Database.executeSQLStatement(
       'SELECT * FROM questionlist WHERE isactive = true'
     )
@@ -21,14 +21,7 @@ module.exports = class SurveyDAO {
     //  - Don't set madeBy since I know where this function will be used will not use madeBy
     // This is also documented in the JSDoc
     activeSurveysQueryResult.rows.forEach((row) => {
-      surveyList.push(new Survey(
-        row.questionlistid,
-        row.title,
-        undefined,
-        row.createdon,
-        undefined,
-        row.isactive
-      ))
+      surveyList.push(SurveyDAO._surveyDatabaseRowToModel(row, undefined, undefined))
     })
 
     return surveyList
@@ -68,17 +61,10 @@ module.exports = class SurveyDAO {
       )
 
       questionsQueryResult.rows.forEach((questionRow) => {
-        questions.push(new SurveyQuestion(questionRow.questionid, questionRow.question, questionRow.questiontype))
+        questions.push(SurveyDAO._surveyQuestionDatabaseRowToModel(questionRow))
       })
 
-      return new Survey(
-        row.questionlistid,
-        row.title,
-        adminUser,
-        row.createdon,
-        questions,
-        row.isactive
-      )
+      return SurveyDAO._surveyDatabaseRowToModel(row, adminUser, questions)
     }
 
     return undefined
@@ -127,5 +113,38 @@ module.exports = class SurveyDAO {
     } else {
       return false
     }
+  }
+
+  /**
+   * Parses a database row to a survey model.
+   * @function
+   * @param surveyDatabaseRow - Is of type database row of table questionlist.
+   * @param {Admin} adminUser - Optional admin user that for the person who created this.
+   * @param {SurveyQuestion[]} surveyQuestions - Questions that belong to the survey.
+   * @returns {Survey} - The survey as model.
+   */
+  static _surveyDatabaseRowToModel (surveyDatabaseRow, adminUser = undefined, surveyQuestions = undefined) {
+    return new Survey(
+      surveyDatabaseRow.questionlistid,
+      surveyDatabaseRow.title,
+      adminUser,
+      surveyDatabaseRow.createdon,
+      surveyQuestions,
+      surveyDatabaseRow.isactive
+    )
+  }
+
+  /**
+   * Parses a database row to a survey model.
+   * @function
+   * @param surveyQuestionDatabaseRow - Is of type database row of table question.
+   * @returns {SurveyQuestion} - The survey as model.
+   */
+  static _surveyQuestionDatabaseRowToModel (surveyQuestionDatabaseRow) {
+    return new SurveyQuestion(
+      surveyQuestionDatabaseRow.questionid,
+      surveyQuestionDatabaseRow.question,
+      surveyQuestionDatabaseRow.questiontype
+    )
   }
 }

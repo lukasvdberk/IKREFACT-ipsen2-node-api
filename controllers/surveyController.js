@@ -7,7 +7,7 @@ const QuestionTypes = require('../models/questionTypeEnum')
 module.exports = class SurveyController {
   static async getSurveys (req, res) {
     try {
-      const listOfSurveys = await SurveyDAO.getAllSurveys()
+      const listOfSurveys = await SurveyDAO.getAllSurveysMetaData()
 
       return ApiResponse.sendSuccessApiResponse(listOfSurveys, res)
     } catch (ignored) {
