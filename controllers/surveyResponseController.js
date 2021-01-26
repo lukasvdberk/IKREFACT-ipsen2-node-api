@@ -2,7 +2,7 @@ const SurveyResponseDAO = require('../dao/surveyResponseDAO')
 const ApiResponse = require('./utils/apiResponse')
 const SurveyResponseCouldNotBeSaved = require('../dao/exceptions/surveyCouldNotBeSaved')
 const SurveyResponseCouldNotBeUpdated = require('../dao/exceptions/surveyResponseCouldNotBeUpdated')
-const SurveyValidNotValid = require('./exceptions/surveyResponseNotValid')
+const SurveyResponseNotValid = require('./exceptions/surveyResponseNotValid')
 const SurveyAnswer = require('../models/answer')
 const SurveyResponse = require('../models/surveyResponse')
 const SurveyQuestion = require('../models/surveyQuestion')
@@ -56,7 +56,7 @@ module.exports = class SurveyResponseController {
       if (exception instanceof SurveyResponseCouldNotBeSaved) {
         return ApiResponse.sendErrorApiResponse(500, 'Could not save data', res)
       }
-      if (exception instanceof SurveyValidNotValid) {
+      if (exception instanceof SurveyResponseNotValid) {
         return ApiResponse.sendErrorApiResponse(400, 'You did not supply any answers.', res)
       } else {
         return ApiResponse.sendErrorApiResponse(500, 'Could not save answerlist', res)
@@ -84,7 +84,7 @@ module.exports = class SurveyResponseController {
       if (exception instanceof SurveyResponseCouldNotBeUpdated) {
         return ApiResponse.sendErrorApiResponse(500, 'Could not save data', res)
       }
-      if (exception instanceof SurveyValidNotValid) {
+      if (exception instanceof SurveyResponseNotValid) {
         return ApiResponse.sendErrorApiResponse(400, 'You did not supply any answers.', res)
       } else {
         return ApiResponse.sendErrorApiResponse(500, 'Could not save answerlist', res)
@@ -112,7 +112,7 @@ module.exports = class SurveyResponseController {
   static _checkIsValidSurveyResponse (surveyResponseToCheck) {
     const isValid = surveyResponseToCheck.answers.length > 0
     if (!isValid) {
-      throw new SurveyValidNotValid('Survey has invalid data')
+      throw new SurveyResponseNotValid('Survey has invalid data')
     }
   }
 }
