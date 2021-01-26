@@ -1,4 +1,5 @@
 const SurveyResponseDAO = require('../dao/surveyResponseDAO')
+const SurveyDAO = require('../dao/surveyDAO')
 const ApiResponse = require('./utils/apiResponse')
 const SurveyResponseCouldNotBeSaved = require('../dao/exceptions/surveyCouldNotBeSaved')
 const SurveyResponseCouldNotBeUpdated = require('../dao/exceptions/surveyResponseCouldNotBeUpdated')
@@ -17,7 +18,7 @@ module.exports = class SurveyResponseController {
   static async surveyResponsesFromUser (req, res) {
     try {
       const userToRetrieveFilledSurveysFrom = req.user
-      const listOfSurvey = await SurveyResponseDAO.getFinishedSurveyResponsesByUserId(userToRetrieveFilledSurveysFrom.id)
+      const listOfSurvey = await SurveyDAO.getSurveysThatUserIdFilled(userToRetrieveFilledSurveysFrom.id)
 
       return ApiResponse.sendSuccessApiResponse(listOfSurvey, res)
     } catch (ignored) {

@@ -2,41 +2,11 @@ const Database = require('./database')
 const Answer = require('../models/answer')
 const SurveyQuestion = require('../models/surveyQuestion')
 const SurveyResponse = require('../models/surveyResponse')
-const SurveyDAO = require('./surveyDAO')
 const SurveyResponseCouldNotBeSaved = require('./exceptions/surveyResponseCouldNotBeSaved')
 const SurveyResponseCouldNotBeUpdated = require('./exceptions/surveyResponseCouldNotBeUpdated')
 const SurveyResponseNotFoundException = require('./exceptions/surveyResponseCouldNotBeFound')
 
 module.exports = class SurveyResponseDAO {
-  /**
-   * Gets the list of Survey already filled by user.
-   * @function
-   * @param {Number} userId - Should be a user model.
-   * @returns {Survey[]} - Filledin questionists by user.
-   */
-  static async getFinishedSurveyResponsesByUserId (userId) {
-    const surveyListQueryResult = await Database.executeSQLStatement(
-      `
-      SELECT ql.*
-      FROM answerlist
-      JOIN answer a ON answerlist.answerlistid = a.answerlistid
-      JOIN question q ON q.questionid = a.questionid
-      JOIN questionlist ql ON ql.questionlistid = q.questionidlistid
-      WHERE answerlist.filledbyuser=$1::integer
-      GROUP BY ql.questionlistid;
-      `,
-      userId
-    )
-
-    const listOfSurveys = []
-
-    surveyListQueryResult.rows.forEach((row) => {
-      listOfSurveys.push(SurveyDAO._surveyDatabaseRowToModel(row))
-    })
-
-    return listOfSurveys
-  }
-
   /**
    * Gets the list of survey already filled by user.
    * @function

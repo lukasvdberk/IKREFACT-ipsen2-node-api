@@ -73,6 +73,35 @@ module.exports = class SurveyDAO {
   }
 
   /**
+   * Gets the list of Survey already filled by user.
+   * @function
+   * @param {Number} userId - Should be a user model.
+   * @returns {Survey[]} - Filledin questionists by user.
+   */
+  static async getSurveysThatUserIdFilled (userId) {
+    const surveyListQueryResult = await Database.executeSQLStatement(
+      `
+      SELECT ql.*
+      FROM answerlist
+      JOIN answer a ON answerlist.answerlistid = a.answerlistid
+      JOIN question q ON q.questionid = a.questionid
+      JOIN questionlist ql ON ql.questionlistid = q.questionidlistid
+      WHERE answerlist.filledbyuser=$1::integer
+      GROUP BY ql.questionlistid;
+      `,
+      userId
+    )
+
+    const listOfSurveys = []
+
+    surveyListQueryResult.rows.forEach((row) => {
+      listOfSurveys.push(SurveyDAO._surveyDatabaseRowToModel(row))
+    })
+
+    return listOfSurveys
+  }
+
+  /**
    * Update a existing survey with edits made by admin
    * @param {Number} existingSurveyId - Id from the not updated survey.
    * @param {Survey} updatedSurveyModel - Survey that is updated.
