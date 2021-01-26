@@ -71,7 +71,13 @@ module.exports = class SurveyResponseController {
       // can throw SurveyValidNotValid if it is invalid
       SurveyResponseController._checkIsValidSurveyResponse(surveyResponseToUpdate)
 
-      await SurveyResponseDAO.updateSurveyResponse(surveyResponseToUpdate, true)
+      // since you could previously post to this endpoint and it would also save we need to keep
+      // the same functionality as before
+      if (!surveyResponseToUpdate.id) {
+        await SurveyResponseDAO.saveSurveyResponse(surveyResponseToUpdate, true)
+      } else {
+        await SurveyResponseDAO.updateSurveyResponse(surveyResponseToUpdate, true)
+      }
 
       return ApiResponse.sendSuccessApiResponse({ saved: true }, res)
     } catch (exception) {
@@ -98,7 +104,7 @@ module.exports = class SurveyResponseController {
       answers.push(answerModel)
     }
 
-    const existingSurveyId = req.id
+    const existingSurveyId = req.body.id
 
     return new SurveyResponse(existingSurveyId, user, undefined, answers)
   }

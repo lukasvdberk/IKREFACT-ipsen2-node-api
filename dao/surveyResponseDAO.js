@@ -31,7 +31,6 @@ module.exports = class SurveyResponseDAO {
     const listOfSurveys = []
 
     surveyListQueryResult.rows.forEach((row) => {
-      // TODO refactor to its own class or something like that
       listOfSurveys.push(SurveyDAO._surveyDatabaseRowToModel(row))
     })
 
