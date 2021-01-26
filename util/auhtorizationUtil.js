@@ -2,10 +2,12 @@ const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 const User = require('../models/user')
 const Admin = require('../models/admin')
+const ApiResponse = require('../controllers/utils/apiResponse')
 
+const JWT_ALGORITHM = 'HS256'
 module.exports = class AuthorizationUtil {
   /**
-   * Hahshes password with sha512.
+   * Hashes password.
    * @function
    * @param {string} password - The password you want to hash.
    * @returns {Object} with {salt, passwordHash}
@@ -42,30 +44,35 @@ module.exports = class AuthorizationUtil {
    */
   static createJWT (userId, username, isAdmin) {
     return jwt.sign({ userId, username, isAdmin }, this.getJWTKey(), {
-      algorithm: 'HS256'
+      algorithm: JWT_ALGORITHM
     })
   }
 
   /**
    * Extracts information from JWT-key
    * @function
-   * @param {Number} userId - User his id (likely coming from the database)
    * @returns {Object} - {userId,username,isAdmin} or undefined if the key is not valid
    */
   static extractJWTInformation (jwtToken) {
-    try {
-      const payload = jwt.verify(jwtToken, this.getJWTKey(), {
-        algorithm: 'HS256'
-      })
+    const payload = jwt.verify(jwtToken, this.getJWTKey(), {
+      algorithm: JWT_ALGORITHM
+    })
 
-      return {
-        username: payload.username,
-        userId: payload.userId,
-        isAdmin: payload.isAdmin
-      }
-    } catch (exception) {
-      return undefined
+    return {
+      userId: payload.userId,
+      username: payload.username,
+      isAdmin: payload.isAdmin
     }
+  }
+
+  /**
+   *
+   * @param {express.Request} req - The express request object that should contain the authorization header.
+   * @returns {String} -  Jwt key
+   * @private
+   */
+  static _extractToken (req) {
+    return req.header('Bearer-token')
   }
 
   /**
@@ -74,34 +81,29 @@ module.exports = class AuthorizationUtil {
    * @function
    */
   static isAuthenticatedAsUser (req, res, next) {
-    const jwtToken = req.header('Bearer-token')
+    try {
+      const jwtToken = AuthorizationUtil._extractToken(req)
 
-    const jwtPayload = AuthorizationUtil.extractJWTInformation(jwtToken)
-
-    if (jwtPayload !== undefined) {
+      const jwtPayload = AuthorizationUtil.extractJWTInformation(jwtToken)
       // so you can use get user who made the request in the endpoint
       // since it will receive the same req object
       req.user = new User(jwtPayload.userId, jwtPayload.username)
       return next()
-    } else {
-      return res.status(403).json({
-        success: false,
-        errorMessage: 'Not authenticated'
-      })
+    } catch (ignored) {
+      return ApiResponse.sendErrorApiResponse(403, 'Not authenticated', res)
     }
   }
 
   /**
-   * Check wheather user is authenticated as a admin. Receives standard express objects and calls next with success.
+   * Check whether user is authenticated as a admin. Receives standard express objects and calls next with success.
    * sets user model in req.user and req.isAdmin
    * @function
    */
   static isAuthenticatedAsAdmin (req, res, next) {
-    const jwtToken = req.header('Bearer-token')
+    try {
+      const jwtToken = AuthorizationUtil._extractToken(req)
 
-    const jwtPayload = AuthorizationUtil.extractJWTInformation(jwtToken)
-
-    if (jwtPayload !== undefined) {
+      const jwtPayload = AuthorizationUtil.extractJWTInformation(jwtToken)
       const isAdmin = jwtPayload.isAdmin
 
       if (isAdmin) {
@@ -111,16 +113,10 @@ module.exports = class AuthorizationUtil {
 
         return next()
       } else {
-        return res.status(403).json({
-          success: false,
-          errorMessage: 'Not a admin'
-        })
+        return ApiResponse.sendErrorApiResponse(403, 'Not a admin', res)
       }
-    } else {
-      return res.status(403).json({
-        success: false,
-        errorMessage: 'Not authenticated'
-      })
+    } catch (ignored) {
+      return ApiResponse.sendErrorApiResponse(403, 'Not authenticated', res)
     }
   }
 }

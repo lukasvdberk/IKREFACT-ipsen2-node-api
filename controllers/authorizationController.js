@@ -67,9 +67,6 @@ module.exports = class AuthorizationController {
     const username = req.body.username
     const password = req.body.password
 
-    if (!username || !password) {
-      return undefined
-    }
     const user = new User(id, username)
     user.password = password
     return user
